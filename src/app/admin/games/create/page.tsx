@@ -11,6 +11,10 @@
     const [sport, setSport] = useState<'NFL' | 'NBA'>('NFL');
     const [gameDate, setGameDate] = useState('');
     const [entryFee, setEntryFee] = useState(0);
+    const [payoutQ1, setPayoutQ1] = useState(25);
+    const [payoutQ2, setPayoutQ2] = useState(25);
+    const [payoutQ3, setPayoutQ3] = useState(25);
+    const [payoutFinal, setPayoutFinal] = useState(25);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -38,10 +42,22 @@
       }
     };
 
+    const validatePayouts = () => {
+      const total = payoutQ1 + payoutQ2 + payoutQ3 + payoutFinal;
+      return total === 100;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
       setLoading(true);
+
+      // Validate payout percentages
+      if (!validatePayouts()) {
+        setError('Payout percentages must add up to exactly 100%');
+        setLoading(false);
+        return;
+      }
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -66,6 +82,10 @@
               away_scores: [],
               home_numbers: [],
               away_numbers: [],
+              payout_q1: payoutQ1,
+              payout_q2: payoutQ2,
+              payout_q3: payoutQ3,
+              payout_final: payoutFinal,
               is_active: true,
               numbers_assigned: false,
               created_by: user.id,
@@ -272,50 +292,111 @@
               </div>
             </div>
 
+            {/* Payout Structure Configuration */}
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                Payout Structure (must total 100%)
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label htmlFor="payoutQ1" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    1st Quarter %
+                  </label>
+                  <input
+                    type="number"
+                    id="payoutQ1"
+                    min="0"
+                    max="100"
+                    value={payoutQ1}
+                    onChange={(e) => setPayoutQ1(Number(e.target.value))}
+                    className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="payoutQ2" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Halftime %
+                  </label>
+                  <input
+                    type="number"
+                    id="payoutQ2"
+                    min="0"
+                    max="100"
+                    value={payoutQ2}
+                    onChange={(e) => setPayoutQ2(Number(e.target.value))}
+                    className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="payoutQ3" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    3rd Quarter %
+                  </label>
+                  <input
+                    type="number"
+                    id="payoutQ3"
+                    min="0"
+                    max="100"
+                    value={payoutQ3}
+                    onChange={(e) => setPayoutQ3(Number(e.target.value))}
+                    className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="payoutFinal" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Final %
+                  </label>
+                  <input
+                    type="number"
+                    id="payoutFinal"
+                    min="0"
+                    max="100"
+                    value={payoutFinal}
+                    onChange={(e) => setPayoutFinal(Number(e.target.value))}
+                    className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </div>
+              <p className={`mt-2 text-xs ${validatePayouts() ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                Total: {payoutQ1 + payoutQ2 + payoutQ3 + payoutFinal}% {validatePayouts() ? '✓' : '(Must equal 100%)'}
+              </p>
+            </div>
+
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white 
   mb-3">Prize Structure Preview</h3>
-              {entryFee === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    🎉 Free Game - No entry fee required!
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    Players can claim boxes for free. Winners receive bragging rights!
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="font-medium text-gray-900 dark:text-white">1st
-  Quarter</div>
-                      <div className="text-indigo-600 
-  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-gray-900 
-  dark:text-white">Halftime</div>
-                      <div className="text-indigo-600 
-  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-gray-900 dark:text-white">3rd
-  Quarter</div>
-                      <div className="text-indigo-600 
-  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-gray-900 
-  dark:text-white">Final</div>
-                      <div className="text-indigo-600 
-  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                    </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="font-medium text-gray-900 dark:text-white">1st Quarter</div>
+                  <div className="text-indigo-600 dark:text-indigo-400">
+                    {entryFee === 0 ? `${payoutQ1}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ1 / 100)} HC (${payoutQ1}%)`}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                    House fee: {entryFee * 100 * 0.1} HotCoins (10%)
-                  </p>
-                </>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium text-gray-900 dark:text-white">Halftime</div>
+                  <div className="text-indigo-600 dark:text-indigo-400">
+                    {entryFee === 0 ? `${payoutQ2}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ2 / 100)} HC (${payoutQ2}%)`}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium text-gray-900 dark:text-white">3rd Quarter</div>
+                  <div className="text-indigo-600 dark:text-indigo-400">
+                    {entryFee === 0 ? `${payoutQ3}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ3 / 100)} HC (${payoutQ3}%)`}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium text-gray-900 dark:text-white">Final</div>
+                  <div className="text-indigo-600 dark:text-indigo-400">
+                    {entryFee === 0 ? `${payoutFinal}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutFinal / 100)} HC (${payoutFinal}%)`}
+                  </div>
+                </div>
+              </div>
+              {entryFee === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                  🎉 Free Game - Winners receive bragging rights and glory!
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                  House fee: {entryFee * 100 * 0.1} HotCoins (10%) • Total payout: {Math.floor(entryFee * 100 * 0.9)} HC
+                </p>
               )}
             </div>
 
