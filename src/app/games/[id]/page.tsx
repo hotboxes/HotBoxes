@@ -135,6 +135,68 @@ export default function GamePage() {
                 {game.away_team}
               </dd>
             </div>
+            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Entry Fee
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                {game.entry_fee === 0 ? 'Free' : `${game.entry_fee} HotCoins per box`}
+              </dd>
+            </div>
+            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Prize Structure
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="text-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <div className="font-semibold">1st Quarter</div>
+                    <div className="text-indigo-600 dark:text-indigo-400">
+                      {game.entry_fee === 0 ? 
+                        `${game.payout_q1 || 25}%` : 
+                        `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q1 || 25) / 100)} HC`
+                      }
+                    </div>
+                  </div>
+                  <div className="text-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <div className="font-semibold">Halftime</div>
+                    <div className="text-indigo-600 dark:text-indigo-400">
+                      {game.entry_fee === 0 ? 
+                        `${game.payout_q2 || 25}%` : 
+                        `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q2 || 25) / 100)} HC`
+                      }
+                    </div>
+                  </div>
+                  <div className="text-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <div className="font-semibold">3rd Quarter</div>
+                    <div className="text-indigo-600 dark:text-indigo-400">
+                      {game.entry_fee === 0 ? 
+                        `${game.payout_q3 || 25}%` : 
+                        `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q3 || 25) / 100)} HC`
+                      }
+                    </div>
+                  </div>
+                  <div className="text-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <div className="font-semibold">Final</div>
+                    <div className="text-indigo-600 dark:text-indigo-400">
+                      {game.entry_fee === 0 ? 
+                        `${game.payout_final || 25}%` : 
+                        `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_final || 25) / 100)} HC`
+                      }
+                    </div>
+                  </div>
+                </div>
+                {game.entry_fee === 0 ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Free game - Winners receive bragging rights!
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Total prize pool: {Math.floor(game.entry_fee * 100 * 0.9)} HotCoins
+                  </p>
+                )}
+              </dd>
+            </div>
             {game.home_scores && game.home_scores.length > 0 && (
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
