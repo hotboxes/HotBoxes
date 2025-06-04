@@ -57,27 +57,54 @@
       }
 
       try {
-        // First delete all boxes for this game
-        const { error: boxesError } = await supabase
+        console.log('Starting deletion for game:', gameId);
+
+        // First, check how many boxes exist for this game
+        const { data: existingBoxes, error: checkError } = await supabase
           .from('boxes')
-          .delete()
+          .select('id')
           .eq('game_id', gameId);
 
-        if (boxesError) {
-          console.error('Error deleting boxes:', boxesError);
-          alert('Failed to delete game boxes. Please try again.');
+        if (checkError) {
+          console.error('Error checking boxes:', checkError);
+          alert(`Error checking boxes: ${checkError.message}`);
           return;
         }
 
+        console.log(`Found ${existingBoxes?.length || 0} boxes to delete`);
+
+        // Delete all boxes for this game
+        const { data: deletedBoxes, error: boxesError } = await supabase
+          .from('boxes')
+          .delete()
+          .eq('game_id', gameId)
+          .select();
+
+        if (boxesError) {
+          console.error('Error deleting boxes:', boxesError);
+          alert(`Failed to delete game boxes: ${boxesError.message}`);
+          return;
+        }
+
+        console.log(`Deleted ${deletedBoxes?.length || 0} boxes`);
+
         // Then delete the game
-        const { error: gameError } = await supabase
+        const { data: deletedGame, error: gameError } = await supabase
           .from('games')
           .delete()
-          .eq('id', gameId);
+          .eq('id', gameId)
+          .select();
 
         if (gameError) {
           console.error('Error deleting game:', gameError);
-          alert('Failed to delete game. Please try again.');
+          alert(`Failed to delete game: ${gameError.message}`);
+          return;
+        }
+
+        console.log('Deleted game:', deletedGame);
+
+        if (!deletedGame || deletedGame.length === 0) {
+          alert('Game was not found or could not be deleted. It may have already been removed.');
           return;
         }
 
@@ -86,7 +113,7 @@
         alert(`Game "${gameName}" has been deleted successfully.`);
       } catch (error) {
         console.error('Error deleting game:', error);
-        alert('An error occurred while deleting the game.');
+        alert(`An error occurred while deleting the game: ${error.message || error}`);
       }
     };
 
