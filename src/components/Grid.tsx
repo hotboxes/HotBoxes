@@ -1,0 +1,313 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Box } from '@/types';
+import { supabase } from '@/lib/supabase';
+
+interface GridProps {
+  gameId: string;
+  initialBoxes?: Box[];
+  userId?: string | null;
+  homeScores?: number[];
+  awayScores?: number[];
+  readOnly?: boolean;
+  homeNumbers?: number[];
+  awayNumbers?: number[];
+  numbersAssigned?: boolean;
+  entryFee?: number;
+  homeTeam?: string;
+  awayTeam?: string;
+}
+
+export default function Grid({ 
+  gameId, 
+  initialBoxes = [], 
+  userId, 
+  homeScores = [], 
+  awayScores = [],
+  readOnly = false,
+  homeNumbers = [],
+  awayNumbers = [],
+  numbersAssigned = false,
+  entryFee = 0,
+  homeTeam = "Home Team",
+  awayTeam = "Away Team"
+}: GridProps) {
+  const [boxes, setBoxes] = useState<Box[]>(initialBoxes);
+  const [selectedBox, setSelectedBox] = useState<Box | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  // Load boxes from database
+  useEffect(() => {
+    if (!gameId) return;
+    
+    const loadBoxes = async () => {
+      const { data, error } = await supabase
+        .from('boxes')
+        .select('*')
+        .eq('game_id', gameId);
+      
+      if (!error && data) {
+        console.log('Loaded boxes:', data.length, data.slice(0, 3)); // Debug log
+        setBoxes(data.map(box => ({
+          id: box.id,
+          row: box.row,
+          column: box.col,
+          userId: box.user_id,
+          gameId: box.game_id
+        })));
+      }
+    };
+    
+    loadBoxes();
+  }, [gameId]);
+
+  // Set up real-time subscription for box updates
+  useEffect(() => {
+    if (!gameId) return;
+
+    const subscription = supabase
+      .channel(`public:boxes:gameId=eq.${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'boxes', filter: `gameId=eq.${gameId}` },
+        (payload) => {
+          const updatedBox = payload.new as Box;
+          setBoxes((currentBoxes) =>
+            currentBoxes.map((box) =>
+              box.id === updatedBox.id ? updatedBox : box
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [gameId]);
+
+  const handleBoxClick = async (box: Box) => {
+    if (readOnly || !userId || box.userId || isSelecting) return;
+
+    if (!confirm(`Purchase this box for ${entryFee} HotCoins?`)) {
+      return;
+    }
+
+    setSelectedBox(box);
+    setIsSelecting(true);
+
+    try {
+      // Check user's HotCoin balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('hotcoin_balance')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if ((profile.hotcoin_balance || 0) < entryFee) {
+        alert(`Insufficient HotCoins. You need ${entryFee} HotCoins but only have ${profile.hotcoin_balance || 0}.`);
+        return;
+      }
+
+      // Deduct HotCoins and update box
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          hotcoin_balance: (profile.hotcoin_balance || 0) - entryFee 
+        })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Update the box in the database
+      const { error: boxError } = await supabase
+        .from('boxes')
+        .update({ user_id: userId })
+        .match({ id: box.id, game_id: gameId });
+
+      if (boxError) throw boxError;
+
+      // Record the transaction
+      const { error: transactionError } = await supabase
+        .from('hotcoin_transactions')
+        .insert([{
+          user_id: userId,
+          type: 'bet',
+          amount: -entryFee,
+          description: `Purchased box for game: ${gameId}`,
+          game_id: gameId,
+        }]);
+
+      if (transactionError) throw transactionError;
+
+      // Update local state
+      setBoxes((currentBoxes) =>
+        currentBoxes.map((b) =>
+          b.id === box.id ? { ...b, userId } : b
+        )
+      );
+
+      alert(`Box purchased successfully for ${entryFee} HotCoins!`);
+    } catch (error) {
+      console.error('Error purchasing box:', error);
+      alert('Failed to purchase box. Please try again.');
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  const getBoxColor = (box: Box) => {
+    if (!box.userId) return 'bg-white dark:bg-gray-800';
+    if (box.userId === userId) return 'bg-indigo-100 dark:bg-indigo-900';
+    return 'bg-gray-100 dark:bg-gray-700';
+  };
+
+  const isWinningBox = (row: number, col: number) => {
+    if (!numbersAssigned || homeNumbers.length === 0 || awayNumbers.length === 0) {
+      return false;
+    }
+    
+    // Get the actual numbers for this position
+    const homeNumber = homeNumbers[row];
+    const awayNumber = awayNumbers[col];
+    
+    // Check if any period's scores match this box's numbers
+    for (let i = 0; i < homeScores.length && i < awayScores.length; i++) {
+      if (homeScores[i] % 10 === homeNumber && awayScores[i] % 10 === awayNumber) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto p-4">
+      {/* Numbers Assignment Status */}
+      {!numbersAssigned && (
+        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Numbers will be randomly assigned 10 minutes before the game starts. 
+                The question marks (?) will be replaced with the actual numbers.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {numbersAssigned && (
+        <div className="mb-4 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Numbers have been assigned! The grid is now ready for the game.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Labels */}
+      <div className="mb-4 flex items-center justify-center">
+        <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-blue-500 rounded"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {homeTeam} (Horizontal)
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-green-500 rounded"></div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {awayTeam} (Vertical)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-11 gap-1">
+        {/* Empty top-left corner */}
+        <div className="h-12 flex items-center justify-center font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"></div>
+        
+        {/* Column headers (home team - horizontal) */}
+        {Array.from({ length: 10 }, (_, i) => (
+          <div 
+            key={`col-${i}`}
+            className="h-12 flex items-center justify-center font-bold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded border-2 border-blue-300 dark:border-blue-700"
+          >
+            {numbersAssigned && homeNumbers.length > 0 ? homeNumbers[i] : '?'}
+          </div>
+        ))}
+
+        {/* Row headers (away team - vertical) and boxes */}
+        {Array.from({ length: 10 }, (_, row) => (
+          <React.Fragment key={`row-${row}`}>
+            {/* Row header */}
+            <div 
+              key={`row-${row}`}
+              className="h-12 flex items-center justify-center font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded border-2 border-green-300 dark:border-green-700"
+            >
+              {numbersAssigned && awayNumbers.length > 0 ? awayNumbers[row] : '?'}
+            </div>
+            
+            {/* Boxes for this row */}
+            {Array.from({ length: 10 }, (_, col) => {
+              const box = boxes.find(b => b.row === row && b.column === col);
+              if (!box) {
+                // Create a placeholder box if it doesn't exist
+                return (
+                  <div
+                    key={`empty-${row}-${col}`}
+                    className="h-12 sm:h-16 border rounded-md bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                  >
+                    <span className="text-xs text-gray-400">Empty</span>
+                  </div>
+                );
+              }
+              
+              const isWinner = isWinningBox(row, col);
+              
+              return (
+                <motion.div
+                  key={`box-${row}-${col}`}
+                  className={`
+                    h-12 sm:h-16 border rounded-md cursor-pointer transition-all 
+                    ${getBoxColor(box)}
+                    ${box.userId === userId ? 'border-indigo-400' : 'border-gray-200 dark:border-gray-700'}
+                    ${isWinner ? 'ring-2 ring-green-500 scale-105' : ''}
+                    ${!box.userId && !readOnly ? 'hover:bg-indigo-50 dark:hover:bg-indigo-800 hover:border-indigo-300' : ''}
+                  `}
+                  whileHover={!box.userId && !readOnly ? { scale: 1.05 } : {}}
+                  whileTap={!box.userId && !readOnly ? { scale: 0.95 } : {}}
+                  onClick={() => handleBoxClick(box)}
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    {box.userId && (
+                      <div className={`w-3 h-3 rounded-full ${box.userId === userId ? 'bg-indigo-500' : 'bg-gray-500'}`} />
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
