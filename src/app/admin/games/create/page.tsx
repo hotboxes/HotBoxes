@@ -10,7 +10,7 @@
     const [awayTeam, setAwayTeam] = useState('');
     const [sport, setSport] = useState<'NFL' | 'NBA'>('NFL');
     const [gameDate, setGameDate] = useState('');
-    const [entryFee, setEntryFee] = useState(5);
+    const [entryFee, setEntryFee] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -254,6 +254,7 @@
   dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500
   focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                 >
+                  <option value={0}>Free (No HotCoins required)</option>
                   <option value={1}>1 HotCoin</option>
                   <option value={2}>2 HotCoins</option>
                   <option value={5}>5 HotCoins</option>
@@ -262,8 +263,11 @@
                   <option value={50}>50 HotCoins</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Total pool: {entryFee * 100} HotCoins • Payouts: {Math.floor(entryFee
-   * 100 * 0.9)} HotCoins
+                  {entryFee === 0 ? (
+                    "Free game - No entry fee required"
+                  ) : (
+                    `Total pool: ${entryFee * 100} HotCoins • Payouts: ${Math.floor(entryFee * 100 * 0.9)} HotCoins`
+                  )}
                 </p>
               </div>
             </div>
@@ -271,35 +275,48 @@
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white 
   mb-3">Prize Structure Preview</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="font-medium text-gray-900 dark:text-white">1st
-  Quarter</div>
-                  <div className="text-indigo-600 
-  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
+              {entryFee === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    🎉 Free Game - No entry fee required!
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                    Players can claim boxes for free. Winners receive bragging rights!
+                  </p>
                 </div>
-                <div className="text-center">
-                  <div className="font-medium text-gray-900 
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="font-medium text-gray-900 dark:text-white">1st
+  Quarter</div>
+                      <div className="text-indigo-600 
+  dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium text-gray-900 
   dark:text-white">Halftime</div>
-                  <div className="text-indigo-600 
+                      <div className="text-indigo-600 
   dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium text-gray-900 dark:text-white">3rd
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium text-gray-900 dark:text-white">3rd
   Quarter</div>
-                  <div className="text-indigo-600 
+                      <div className="text-indigo-600 
   dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium text-gray-900 
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium text-gray-900 
   dark:text-white">Final</div>
-                  <div className="text-indigo-600 
+                      <div className="text-indigo-600 
   dark:text-indigo-400">{Math.floor(entryFee * 100 * 0.9 * 0.25)} HC</div>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                House fee: {entryFee * 100 * 0.1} HotCoins (10%)
-              </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                    House fee: {entryFee * 100 * 0.1} HotCoins (10%)
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="flex justify-end space-x-4">
