@@ -367,31 +367,31 @@
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">1st Quarter</div>
                   <div className="text-indigo-600 dark:text-indigo-400">
-                    {entryFee === 0 ? `${payoutQ1}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ1 / 100)} HC (${payoutQ1}%)`}
+                    {entryFee === 0 ? `${payoutQ1} HC` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ1 / 100)} HC`}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">Halftime</div>
                   <div className="text-indigo-600 dark:text-indigo-400">
-                    {entryFee === 0 ? `${payoutQ2}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ2 / 100)} HC (${payoutQ2}%)`}
+                    {entryFee === 0 ? `${payoutQ2} HC` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ2 / 100)} HC`}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">3rd Quarter</div>
                   <div className="text-indigo-600 dark:text-indigo-400">
-                    {entryFee === 0 ? `${payoutQ3}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ3 / 100)} HC (${payoutQ3}%)`}
+                    {entryFee === 0 ? `${payoutQ3} HC` : `${Math.floor(entryFee * 100 * 0.9 * payoutQ3 / 100)} HC`}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">Final</div>
                   <div className="text-indigo-600 dark:text-indigo-400">
-                    {entryFee === 0 ? `${payoutFinal}%` : `${Math.floor(entryFee * 100 * 0.9 * payoutFinal / 100)} HC (${payoutFinal}%)`}
+                    {entryFee === 0 ? `${payoutFinal} HC` : `${Math.floor(entryFee * 100 * 0.9 * payoutFinal / 100)} HC`}
                   </div>
                 </div>
               </div>
               {entryFee === 0 ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                  🎉 Free Game - Winners receive bragging rights and glory!
+                  🎉 Free Game - Fixed HotCoin prizes for winners!
                 </p>
               ) : (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">

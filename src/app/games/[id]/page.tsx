@@ -153,7 +153,7 @@ export default function GamePage() {
                     <div className="font-semibold">1st Quarter</div>
                     <div className="text-indigo-600 dark:text-indigo-400">
                       {game.entry_fee === 0 ? 
-                        `${game.payout_q1 || 25}%` : 
+                        `${game.payout_q1 || 25} HC` : 
                         `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q1 || 25) / 100)} HC`
                       }
                     </div>
@@ -162,7 +162,7 @@ export default function GamePage() {
                     <div className="font-semibold">Halftime</div>
                     <div className="text-indigo-600 dark:text-indigo-400">
                       {game.entry_fee === 0 ? 
-                        `${game.payout_q2 || 25}%` : 
+                        `${game.payout_q2 || 25} HC` : 
                         `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q2 || 25) / 100)} HC`
                       }
                     </div>
@@ -171,7 +171,7 @@ export default function GamePage() {
                     <div className="font-semibold">3rd Quarter</div>
                     <div className="text-indigo-600 dark:text-indigo-400">
                       {game.entry_fee === 0 ? 
-                        `${game.payout_q3 || 25}%` : 
+                        `${game.payout_q3 || 25} HC` : 
                         `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_q3 || 25) / 100)} HC`
                       }
                     </div>
@@ -180,7 +180,7 @@ export default function GamePage() {
                     <div className="font-semibold">Final</div>
                     <div className="text-indigo-600 dark:text-indigo-400">
                       {game.entry_fee === 0 ? 
-                        `${game.payout_final || 25}%` : 
+                        `${game.payout_final || 25} HC` : 
                         `${Math.floor(game.entry_fee * 100 * 0.9 * (game.payout_final || 25) / 100)} HC`
                       }
                     </div>
@@ -188,7 +188,7 @@ export default function GamePage() {
                 </div>
                 {game.entry_fee === 0 ? (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Free game - Winners receive bragging rights!
+                    Free game - Winners receive fixed HotCoin prizes!
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
