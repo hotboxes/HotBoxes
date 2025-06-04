@@ -50,6 +50,15 @@
           throw new Error('You must be logged in');
         }
 
+        console.log('Creating game with data:', {
+          name,
+          home_team: homeTeam,
+          away_team: awayTeam,
+          sport,
+          game_date: gameDate,
+          entry_fee: entryFee
+        });
+
         const { data: game, error: gameError } = await supabase
           .from('games')
           .insert([
@@ -71,32 +80,19 @@
           .select()
           .single();
 
-        if (gameError) throw gameError;
-
-        const boxes = [];
-        for (let row = 0; row < 10; row++) {
-          for (let col = 0; col < 10; col++) {
-            boxes.push({
-              id: `${game.id}-${row}-${col}`,
-              row,
-              col,
-              user_id: null,
-              game_id: game.id,
-            });
-          }
+        if (gameError) {
+          console.error('Game creation error:', gameError);
+          throw new Error(`Game creation failed: ${gameError.message}`);
         }
 
-        const { error: boxesError } = await supabase
-          .from('boxes')
-          .insert(boxes);
+        console.log('Game created successfully:', game);
 
-        if (boxesError) {
-          console.error('Boxes creation error:', boxesError);
-          throw new Error(`Failed to create boxes: ${boxesError.message}`);
-        }
-
+        // Skip box creation for now to test
+        alert(`Game "${game.name}" created successfully!`);
         router.push('/admin');
+
       } catch (err: any) {
+        console.error('Full error:', err);
         setError(err.message);
       } finally {
         setLoading(false);
