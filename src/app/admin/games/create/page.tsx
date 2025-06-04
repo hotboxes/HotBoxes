@@ -42,22 +42,10 @@
       }
     };
 
-    const validatePayouts = () => {
-      const total = payoutQ1 + payoutQ2 + payoutQ3 + payoutFinal;
-      return total === 100;
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
       setLoading(true);
-
-      // Validate payout percentages
-      if (!validatePayouts()) {
-        setError('Payout percentages must add up to exactly 100%');
-        setLoading(false);
-        return;
-      }
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -295,18 +283,17 @@
             {/* Payout Structure Configuration */}
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                Payout Structure (must total 100%)
+                Prize Structure (HotCoins)
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label htmlFor="payoutQ1" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                    1st Quarter %
+                    1st Quarter HC
                   </label>
                   <input
                     type="number"
                     id="payoutQ1"
                     min="0"
-                    max="100"
                     value={payoutQ1}
                     onChange={(e) => setPayoutQ1(Number(e.target.value))}
                     className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
@@ -314,13 +301,12 @@
                 </div>
                 <div>
                   <label htmlFor="payoutQ2" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                    Halftime %
+                    Halftime HC
                   </label>
                   <input
                     type="number"
                     id="payoutQ2"
                     min="0"
-                    max="100"
                     value={payoutQ2}
                     onChange={(e) => setPayoutQ2(Number(e.target.value))}
                     className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
@@ -328,13 +314,12 @@
                 </div>
                 <div>
                   <label htmlFor="payoutQ3" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                    3rd Quarter %
+                    3rd Quarter HC
                   </label>
                   <input
                     type="number"
                     id="payoutQ3"
                     min="0"
-                    max="100"
                     value={payoutQ3}
                     onChange={(e) => setPayoutQ3(Number(e.target.value))}
                     className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
@@ -342,21 +327,20 @@
                 </div>
                 <div>
                   <label htmlFor="payoutFinal" className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                    Final %
+                    Final HC
                   </label>
                   <input
                     type="number"
                     id="payoutFinal"
                     min="0"
-                    max="100"
                     value={payoutFinal}
                     onChange={(e) => setPayoutFinal(Number(e.target.value))}
                     className="mt-1 block w-full px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
-              <p className={`mt-2 text-xs ${validatePayouts() ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                Total: {payoutQ1 + payoutQ2 + payoutQ3 + payoutFinal}% {validatePayouts() ? '✓' : '(Must equal 100%)'}
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Total payout: {payoutQ1 + payoutQ2 + payoutQ3 + payoutFinal} HotCoins
               </p>
             </div>
 
