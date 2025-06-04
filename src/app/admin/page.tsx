@@ -51,6 +51,45 @@
       }
     };
 
+    const handleDeleteGame = async (gameId: string, gameName: string) => {
+      if (!confirm(`Are you sure you want to delete the game "${gameName}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        // First delete all boxes for this game
+        const { error: boxesError } = await supabase
+          .from('boxes')
+          .delete()
+          .eq('game_id', gameId);
+
+        if (boxesError) {
+          console.error('Error deleting boxes:', boxesError);
+          alert('Failed to delete game boxes. Please try again.');
+          return;
+        }
+
+        // Then delete the game
+        const { error: gameError } = await supabase
+          .from('games')
+          .delete()
+          .eq('id', gameId);
+
+        if (gameError) {
+          console.error('Error deleting game:', gameError);
+          alert('Failed to delete game. Please try again.');
+          return;
+        }
+
+        // Refresh the games list
+        await loadAdminData();
+        alert(`Game "${gameName}" has been deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting game:', error);
+        alert('An error occurred while deleting the game.');
+      }
+    };
+
     if (loading) {
       return (
         <div className="flex justify-center items-center min-h-[50vh]">
@@ -251,6 +290,12 @@
                         >
                           Manage
                         </Link>
+                        <button
+                          onClick={() => handleDeleteGame(game.id, game.name)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-500 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </li>
