@@ -52,7 +52,6 @@
           return;
         }
 
-        // Test with minimal data first
         const { data: game, error: gameError } = await supabase
           .from('games')
           .insert([
@@ -63,7 +62,13 @@
               sport,
               game_date: gameDate,
               entry_fee: entryFee,
+              home_scores: [],
+              away_scores: [],
+              home_numbers: [],
+              away_numbers: [],
               is_active: true,
+              numbers_assigned: false,
+              created_by: user.id,
             },
           ])
           .select()
@@ -74,6 +79,29 @@
           setError(`Database error: ${gameError.message}`);
           setLoading(false);
           return;
+        }
+
+        // Create boxes for the game
+        const boxes = [];
+        for (let row = 0; row < 10; row++) {
+          for (let col = 0; col < 10; col++) {
+            boxes.push({
+              id: `${game.id}-${row}-${col}`,
+              row,
+              col,
+              user_id: null,
+              game_id: game.id,
+            });
+          }
+        }
+
+        const { error: boxesError } = await supabase
+          .from('boxes')
+          .insert(boxes);
+
+        if (boxesError) {
+          console.error('Boxes creation error:', boxesError);
+          // Don't fail if boxes creation fails
         }
 
         alert(`Game created: ${game.name}`);
