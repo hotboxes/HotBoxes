@@ -42,6 +42,17 @@ export default function Navigation({ user: propUser }: NavigationProps) {
       console.error('Error loading user:', error);
     }
   };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -117,12 +128,12 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   <span>|</span>
                   <span>{profile?.username || user.email}</span>
                 </div>
-                <Link
-                  href="/api/auth/signout"
+                <button
+                  onClick={handleSignOut}
                   className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-md text-sm font-medium"
                 >
                   Sign Out
-                </Link>
+                </button>
               </>
             ) : (
               <>
@@ -257,12 +268,12 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     {profile?.hotcoin_balance || 0} HotCoins
                   </div>
                 </div>
-                <Link
-                  href="/api/auth/signout"
+                <button
+                  onClick={handleSignOut}
                   className="ml-auto flex-shrink-0 bg-gray-200 dark:bg-gray-700 p-1 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   <span className="px-3 py-1 text-sm text-gray-800 dark:text-white">Sign Out</span>
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="space-y-1 px-4">
