@@ -95,7 +95,7 @@
           throw new Error(`Failed to create boxes: ${boxesError.message}`);
         }
 
-        router.push(`/admin/games/${game.id}`);
+        router.push('/admin');
       } catch (err: any) {
         setError(err.message);
       } finally {
