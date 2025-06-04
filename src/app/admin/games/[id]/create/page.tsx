@@ -47,18 +47,12 @@
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-          throw new Error('You must be logged in');
+          setError('You must be logged in');
+          setLoading(false);
+          return;
         }
 
-        console.log('Creating game with data:', {
-          name,
-          home_team: homeTeam,
-          away_team: awayTeam,
-          sport,
-          game_date: gameDate,
-          entry_fee: entryFee
-        });
-
+        // Test with minimal data first
         const { data: game, error: gameError } = await supabase
           .from('games')
           .insert([
@@ -69,12 +63,7 @@
               sport,
               game_date: gameDate,
               entry_fee: entryFee,
-              home_scores: [],
-              away_scores: [],
               is_active: true,
-              numbers_assigned: false,
-              home_numbers: [],
-              away_numbers: [],
             },
           ])
           .select()
@@ -82,18 +71,17 @@
 
         if (gameError) {
           console.error('Game creation error:', gameError);
-          throw new Error(`Game creation failed: ${gameError.message}`);
+          setError(`Database error: ${gameError.message}`);
+          setLoading(false);
+          return;
         }
 
-        console.log('Game created successfully:', game);
-
-        // Skip box creation for now to test
-        alert(`Game "${game.name}" created successfully!`);
+        alert(`Game created: ${game.name}`);
         router.push('/admin');
 
       } catch (err: any) {
         console.error('Full error:', err);
-        setError(err.message);
+        setError(`Error: ${err.message}`);
       } finally {
         setLoading(false);
       }
