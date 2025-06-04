@@ -1,278 +1,113 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
+  import { useState } from 'react';
+  import { useRouter } from 'next/navigation';
+  import { supabase } from '@/lib/supabase';
 
-export default function AdminPage() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [games, setGames] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  export default function CreateGamePage() {
+    const [name, setName] = useState('');
+    const [homeTeam, setHomeTeam] = useState('');
+    const [awayTeam, setAwayTeam] = useState('');
+    const [sport, setSport] = useState<'NFL' | 'NBA'>('NFL');
+    const [gameDate, setGameDate] = useState('');
+    const [entryFee, setEntryFee] = useState(5);
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-  useEffect(() => {
-    loadAdminData();
-  }, []);
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
 
-  const loadAdminData = async () => {
-    try {
-      // Get user information
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      
-      if (!authUser) {
-        router.push('/login');
-        return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not logged in');
+
+        const { data: game } = await supabase
+          .from('games')
+          .insert([{
+            name,
+            home_team: homeTeam,
+            away_team: awayTeam,
+            sport,
+            game_date: gameDate,
+            entry_fee: entryFee,
+            home_scores: [],
+            away_scores: [],
+            is_active: true,
+            numbers_assigned: false,
+            home_numbers: [],
+            away_numbers: [],
+          }])
+          .select()
+          .single();
+
+        if (game) {
+          const boxes = [];
+          for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 10; col++) {
+              boxes.push({
+                id: `${game.id}-${row}-${col}`,
+                row,
+                col,
+                user_id: null,
+                game_id: game.id,
+              });
+            }
+          }
+          await supabase.from('boxes').insert(boxes);
+          router.push(`/admin/games/${game.id}`);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setUser(authUser);
-
-      // Check if user is admin
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', authUser.id)
-        .single();
-
-      if (!profileData?.is_admin) {
-        router.push('/');
-        return;
-      }
-
-      setProfile(profileData);
-
-      // Get recent games
-      const { data: gamesData } = await supabase
-        .from('games')
-        .select('*')
-        .order('game_date', { ascending: false })
-        .limit(10);
-
-      setGames(gamesData || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-8">Create New Game</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label>Sport</label>
+            <select value={sport} onChange={(e) => setSport(e.target.value as 'NFL' |
+  'NBA')}>
+              <option value="NFL">NFL</option>
+              <option value="NBA">NBA</option>
+            </select>
+          </div>
+          <div>
+            <label>Game Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div>
+            <label>Home Team</label>
+            <input value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)}
+  required />
+          </div>
+          <div>
+            <label>Away Team</label>
+            <input value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)}
+  required />
+          </div>
+          <div>
+            <label>Game Date</label>
+            <input type="datetime-local" value={gameDate} onChange={(e) =>
+  setGameDate(e.target.value)} required />
+          </div>
+          <div>
+            <label>Entry Fee</label>
+            <select value={entryFee} onChange={(e) =>
+  setEntryFee(Number(e.target.value))}>
+              <option value={1}>1 HC</option>
+              <option value={5}>5 HC</option>
+              <option value={10}>10 HC</option>
+            </select>
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Game'}
+          </button>
+        </form>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Error: {error}</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !profile?.is_admin) {
-    return null; // Router will redirect
-  }
-
-  // Calculate statistics
-  const activeGames = games.filter(g => g.is_active).length;
-  const totalGames = games.length;
-  const totalRevenue = games.reduce((sum, game) => {
-    return sum + (game.entry_fee * 100); // Assuming 100 boxes per game for estimation
-  }, 0);
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-        <Link
-          href="/admin/games/create"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-        >
-          Add New Game
-        </Link>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">🎮</span>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Active Games
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {activeGames}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">💰</span>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Potential Revenue
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {totalRevenue} HC
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">📊</span>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Total Games
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {totalGames}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mb-8">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-            Quick Actions
-          </h3>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-            <Link
-              href="/admin/games/create"
-              className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-4 rounded-lg text-center transition-colors"
-            >
-              <div className="text-2xl mb-2">🏈</div>
-              <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
-                Add NFL Game
-              </div>
-            </Link>
-            <Link
-              href="/admin/games/create?sport=NBA"
-              className="bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 p-4 rounded-lg text-center transition-colors"
-            >
-              <div className="text-2xl mb-2">🏀</div>
-              <div className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                Add NBA Game
-              </div>
-            </Link>
-            <Link
-              href="/admin/scores"
-              className="bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 p-4 rounded-lg text-center transition-colors"
-            >
-              <div className="text-2xl mb-2">📝</div>
-              <div className="text-sm font-medium text-green-700 dark:text-green-300">
-                Update Scores
-              </div>
-            </Link>
-            <Link
-              href="/admin/payouts"
-              className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors"
-            >
-              <div className="text-2xl mb-2">💸</div>
-              <div className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                Process Payouts
-              </div>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Games */}
-      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-            Recent Games
-          </h3>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          {games && games.length > 0 ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {games.map((game) => (
-                <li key={game.id}>
-                  <div className="px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                          {game.sport}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {game.name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {game.home_team} vs {game.away_team} • {game.entry_fee} HC per box
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {game.is_active ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-                          Closed
-                        </span>
-                      )}
-                      <Link
-                        href={`/admin/games/${game.id}`}
-                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 text-sm font-medium"
-                      >
-                        Manage
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="px-4 py-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No games yet. Create your first game!</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
