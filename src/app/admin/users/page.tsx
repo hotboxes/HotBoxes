@@ -151,6 +151,67 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    // Prevent deleting self
+    if (userId === currentUser.id) {
+      alert('❌ You cannot delete your own account!');
+      return;
+    }
+
+    const confirmMessage = `⚠️ DANGER: Delete user "${userEmail}"?\n\nThis will permanently delete:\n• User account and profile\n• All game boxes and entries\n• All transaction history\n• All related data\n\nThis action CANNOT be undone!\n\nType "DELETE" to confirm:`;
+    
+    const confirmation = prompt(confirmMessage);
+    if (confirmation !== 'DELETE') {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Delete in proper order due to foreign key constraints
+      // 1. Delete user's boxes first
+      const { error: boxesError } = await supabase
+        .from('boxes')
+        .delete()
+        .eq('user_id', userId);
+
+      if (boxesError) {
+        console.error('Error deleting user boxes:', boxesError);
+        throw new Error('Failed to delete user game entries');
+      }
+
+      // 2. Delete user's transactions
+      const { error: transactionsError } = await supabase
+        .from('hotcoin_transactions')
+        .delete()
+        .eq('user_id', userId);
+
+      if (transactionsError) {
+        console.error('Error deleting user transactions:', transactionsError);
+        throw new Error('Failed to delete user transaction history');
+      }
+
+      // 3. Delete the user profile (this also handles auth user deletion via RLS/triggers if setup)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('Error deleting user profile:', profileError);
+        throw new Error('Failed to delete user profile');
+      }
+
+      alert(`✅ User "${userEmail}" has been permanently deleted along with all associated data.`);
+      loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert(`❌ Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -301,6 +362,18 @@ export default function AdminUsersPage() {
                         >
                           View Profile
                         </Link>
+                        <button
+                          onClick={() => handleDeleteUser(user.id, user.email)}
+                          disabled={user.id === currentUser?.id}
+                          className={`text-sm font-medium ${
+                            user.id === currentUser?.id
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-red-600 dark:text-red-400 hover:text-red-500'
+                          }`}
+                          title={user.id === currentUser?.id ? 'Cannot delete your own account' : 'Delete user permanently'}
+                        >
+                          {user.id === currentUser?.id ? '🔒 Self' : '🗑️ Delete'}
+                        </button>
                       </>
                     )}
                   </div>
@@ -320,6 +393,7 @@ export default function AdminUsersPage() {
           <p><strong>Edit Balance:</strong> Click "Edit Balance" to adjust user's HotCoin balance (for giveaways, refunds, etc.)</p>
           <p><strong>Admin Rights:</strong> Click "Make Admin" or "Remove Admin" to manage admin privileges</p>
           <p><strong>View Profile:</strong> Click "View Profile" to see detailed transaction history and user activity</p>
+          <p><strong>Delete User:</strong> Click "🗑️ Delete" to permanently remove user and all their data (requires typing "DELETE" to confirm)</p>
           <p><strong>Search:</strong> Use the search box to find users by email or username</p>
         </div>
       </div>
