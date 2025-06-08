@@ -97,6 +97,36 @@ export default function AdminGamePage() {
       console.log('Attempting to update payouts for game:', id);
       console.log('Payout values:', payoutValues);
       
+      // First, check if we can read the game and our admin status
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      console.log('Current user:', authUser?.id);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', authUser?.id)
+        .single();
+      
+      console.log('User profile:', { profile, profileError });
+      
+      if (profileError || !profile?.is_admin) {
+        throw new Error('Admin access required');
+      }
+      
+      // Check if the game exists and we can read it
+      const { data: gameCheck, error: gameError } = await supabase
+        .from('games')
+        .select('id, name')
+        .eq('id', id)
+        .single();
+        
+      console.log('Game check:', { gameCheck, gameError });
+      
+      if (gameError || !gameCheck) {
+        throw new Error('Game not found or no access');
+      }
+      
+      // Now try the update
       const { data, error } = await supabase
         .from('games')
         .update({
