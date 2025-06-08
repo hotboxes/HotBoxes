@@ -34,7 +34,7 @@ export interface Game {
 export interface HotCoinTransaction {
   id: string
   userId: string
-  type: 'purchase' | 'bet' | 'payout' | 'refund'
+  type: 'purchase' | 'bet' | 'payout' | 'refund' | 'withdrawal'
   amount: number
   description: string
   gameId?: string
