@@ -230,6 +230,7 @@ export default function HotCoinsPage() {
           amount: withdrawAmount,
           cashAppUsername: withdrawCashApp,
           userEmail: user?.email,
+          username: user?.username || 'No username set',
           userId: user?.id,
           userBalance: (user?.hotcoinBalance || 0) - withdrawAmount
         })

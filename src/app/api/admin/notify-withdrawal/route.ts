@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, cashAppUsername, userEmail, userId, userBalance } = await request.json();
+    const { amount, cashAppUsername, userEmail, username, userId, userBalance } = await request.json();
     
     // In a production app, you'd use a service like SendGrid, Resend, or AWS SES
     // For now, we'll just log it (you can check Vercel logs)
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
       amount,
       cashAppUsername,
       userEmail,
+      username,
       userId,
       userBalance,
       timestamp: new Date().toISOString()
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
           <li><strong>Amount:</strong> $${amount}</li>
           <li><strong>User CashApp:</strong> ${cashAppUsername}</li>
           <li><strong>User Email:</strong> ${userEmail}</li>
+          <li><strong>HotBoxes Username:</strong> ${username}</li>
           <li><strong>User ID:</strong> ${userId}</li>
           <li><strong>Remaining Balance:</strong> $${userBalance}</li>
         </ul>
