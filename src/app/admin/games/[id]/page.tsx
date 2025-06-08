@@ -23,6 +23,15 @@ export default function AdminGamePage() {
     payout_final: 0
   });
   const [saving, setSaving] = useState(false);
+  const [editingGame, setEditingGame] = useState(false);
+  const [gameValues, setGameValues] = useState({
+    name: '',
+    home_team: '',
+    away_team: '',
+    sport: 'NFL' as 'NFL' | 'NBA',
+    game_date: '',
+    entry_fee: 0
+  });
 
   useEffect(() => {
     loadAdminGameData();
@@ -72,6 +81,20 @@ export default function AdminGamePage() {
         payout_q2: gameData.payout_q2 || 0,
         payout_q3: gameData.payout_q3 || 0,
         payout_final: gameData.payout_final || 0
+      });
+
+      // Set game values for editing
+      const gameDate = new Date(gameData.game_date);
+      const localISOTime = new Date(gameDate.getTime() - (gameDate.getTimezoneOffset() * 60000))
+        .toISOString().slice(0, 16);
+      
+      setGameValues({
+        name: gameData.name || '',
+        home_team: gameData.home_team || '',
+        away_team: gameData.away_team || '',
+        sport: gameData.sport || 'NFL',
+        game_date: localISOTime,
+        entry_fee: gameData.entry_fee || 0
       });
 
       // Fetch game boxes and user info
@@ -180,6 +203,91 @@ export default function AdminGamePage() {
       payout_final: game?.payout_final || 0
     });
     setEditingPayouts(false);
+  };
+
+  const handleGameSave = async () => {
+    setSaving(true);
+    try {
+      console.log('Attempting to update game:', id);
+      console.log('Game values:', gameValues);
+      
+      // Check admin access
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', authUser?.id)
+        .single();
+      
+      if (profileError || !profile?.is_admin) {
+        throw new Error('Admin access required');
+      }
+      
+      // Convert datetime to ISO string for database storage
+      const gameDateTime = new Date(gameValues.game_date).toISOString();
+      
+      // Update the game
+      const { data, error } = await supabase
+        .from('games')
+        .update({
+          name: gameValues.name,
+          home_team: gameValues.home_team,
+          away_team: gameValues.away_team,
+          sport: gameValues.sport,
+          game_date: gameDateTime,
+          entry_fee: gameValues.entry_fee
+        })
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No rows updated - check permissions or game ID');
+      }
+
+      // Update local game state
+      setGame(prev => ({
+        ...prev,
+        name: gameValues.name,
+        home_team: gameValues.home_team,
+        away_team: gameValues.away_team,
+        sport: gameValues.sport,
+        game_date: gameDateTime,
+        entry_fee: gameValues.entry_fee
+      }));
+
+      setEditingGame(false);
+      alert('Game details updated successfully!');
+      
+      // Refresh game data to ensure everything is in sync
+      await loadAdminGameData();
+    } catch (err: any) {
+      console.error('Error updating game:', err);
+      alert(`Failed to update game details: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGameCancel = () => {
+    // Reset to original values
+    const gameDate = new Date(game?.game_date);
+    const localISOTime = new Date(gameDate.getTime() - (gameDate.getTimezoneOffset() * 60000))
+      .toISOString().slice(0, 16);
+    
+    setGameValues({
+      name: game?.name || '',
+      home_team: game?.home_team || '',
+      away_team: game?.away_team || '',
+      sport: game?.sport || 'NFL',
+      game_date: localISOTime,
+      entry_fee: game?.entry_fee || 0
+    });
+    setEditingGame(false);
   };
 
   if (loading) {
@@ -347,52 +455,160 @@ export default function AdminGamePage() {
       {/* Game Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
+          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
               Game Information
             </h3>
+            {!editingGame && (
+              <button
+                onClick={() => setEditingGame(true)}
+                className="ml-3 inline-flex justify-center py-1 px-3 border border-transparent shadow-sm text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Edit
+              </button>
+            )}
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700">
-            <dl>
-              <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Sport</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {game.sport}
-                </dd>
+            {editingGame ? (
+              <div className="px-4 py-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Game Name</label>
+                  <input
+                    type="text"
+                    value={gameValues.name}
+                    onChange={(e) => setGameValues(prev => ({ ...prev, name: e.target.value }))}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Home Team</label>
+                    <input
+                      type="text"
+                      value={gameValues.home_team}
+                      onChange={(e) => setGameValues(prev => ({ ...prev, home_team: e.target.value }))}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Away Team</label>
+                    <input
+                      type="text"
+                      value={gameValues.away_team}
+                      onChange={(e) => setGameValues(prev => ({ ...prev, away_team: e.target.value }))}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Sport</label>
+                    <select
+                      value={gameValues.sport}
+                      onChange={(e) => setGameValues(prev => ({ ...prev, sport: e.target.value as 'NFL' | 'NBA' }))}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="NFL">NFL</option>
+                      <option value="NBA">NBA</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Entry Fee (HotCoins)</label>
+                    <select
+                      value={gameValues.entry_fee}
+                      onChange={(e) => setGameValues(prev => ({ ...prev, entry_fee: parseInt(e.target.value) }))}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value={0}>Free</option>
+                      <option value={1}>1 HC</option>
+                      <option value={2}>2 HC</option>
+                      <option value={5}>5 HC</option>
+                      <option value={10}>10 HC</option>
+                      <option value={20}>20 HC</option>
+                      <option value={50}>50 HC</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Game Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={gameValues.game_date}
+                    onChange={(e) => setGameValues(prev => ({ ...prev, game_date: e.target.value }))}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={handleGameCancel}
+                    disabled={saving}
+                    className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleGameSave}
+                    disabled={saving}
+                    className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Game Date</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {new Date(game.game_date).toLocaleString()}
-                </dd>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Entry Fee</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {game.entry_fee} HotCoins per box
-                </dd>
-              </div>
-              <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {game.is_active ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-                      Closed
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Numbers Assigned</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {game.numbers_assigned ? 'Yes' : 'No'}
-                </dd>
-              </div>
-            </dl>
+            ) : (
+              <dl>
+                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Game Name</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.name}
+                  </dd>
+                </div>
+                <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Teams</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.home_team} vs {game.away_team}
+                  </dd>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Sport</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.sport}
+                  </dd>
+                </div>
+                <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Game Date</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {new Date(game.game_date).toLocaleString()}
+                  </dd>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Entry Fee</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.entry_fee === 0 ? 'Free' : `${game.entry_fee} HotCoins per box`}
+                  </dd>
+                </div>
+                <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.is_active ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+                        Closed
+                      </span>
+                    )}
+                  </dd>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Numbers Assigned</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                    {game.numbers_assigned ? 'Yes' : 'No'}
+                  </dd>
+                </div>
+              </dl>
+            )}
           </div>
         </div>
 
