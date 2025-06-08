@@ -80,31 +80,67 @@
         }
 
         console.log('User authenticated, creating game record...');
-        const { data: game, error: gameError } = await supabase
-          .from('games')
-          .insert([
-            {
-              name,
-              home_team: homeTeam,
-              away_team: awayTeam,
-              sport,
-              game_date: new Date(gameDate).toISOString(),
-              entry_fee: entryFee,
-              home_scores: [],
-              away_scores: [],
-              home_numbers: [],
-              away_numbers: [],
-              payout_q1: payoutQ1,
-              payout_q2: payoutQ2,
-              payout_q3: payoutQ3,
-              payout_final: payoutFinal,
-              is_active: true,
-              numbers_assigned: false,
-              created_by: user.id,
-            },
-          ])
-          .select()
-          .single();
+        
+        // First try with payout columns, fall back without them if they don't exist
+        let game, gameError;
+        try {
+          console.log('Attempting game creation with payout columns...');
+          const result = await supabase
+            .from('games')
+            .insert([
+              {
+                name,
+                home_team: homeTeam,
+                away_team: awayTeam,
+                sport,
+                game_date: new Date(gameDate).toISOString(),
+                entry_fee: entryFee,
+                home_scores: [],
+                away_scores: [],
+                home_numbers: [],
+                away_numbers: [],
+                payout_q1: payoutQ1,
+                payout_q2: payoutQ2,
+                payout_q3: payoutQ3,
+                payout_final: payoutFinal,
+                is_active: true,
+                numbers_assigned: false,
+                created_by: user.id,
+              },
+            ])
+            .select()
+            .single();
+          
+          game = result.data;
+          gameError = result.error;
+        } catch (err) {
+          console.log('Payout columns failed, trying without them...', err);
+          // Try without payout columns if they don't exist
+          const result = await supabase
+            .from('games')
+            .insert([
+              {
+                name,
+                home_team: homeTeam,
+                away_team: awayTeam,
+                sport,
+                game_date: new Date(gameDate).toISOString(),
+                entry_fee: entryFee,
+                home_scores: [],
+                away_scores: [],
+                home_numbers: [],
+                away_numbers: [],
+                is_active: true,
+                numbers_assigned: false,
+                created_by: user.id,
+              },
+            ])
+            .select()
+            .single();
+          
+          game = result.data;
+          gameError = result.error;
+        }
 
         if (gameError) {
           console.error('Game creation error:', gameError);
