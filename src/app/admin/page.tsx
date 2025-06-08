@@ -16,6 +16,13 @@ export default function AdminPage() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any>({});
+  const [showBulkOps, setShowBulkOps] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [bulkAmount, setBulkAmount] = useState('');
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkType, setBulkType] = useState<'add' | 'subtract'>('add');
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +46,50 @@ export default function AdminPage() {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Real-time search functionality
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSearchResults({});
+      return;
+    }
+
+    const performSearch = () => {
+      const query = searchQuery.toLowerCase();
+      
+      // Search users
+      const matchingUsers = allUsers.filter(user => 
+        user.email?.toLowerCase().includes(query) ||
+        user.username?.toLowerCase().includes(query) ||
+        user.id?.toLowerCase().includes(query)
+      ).slice(0, 5);
+
+      // Search games
+      const matchingGames = games.filter(game =>
+        game.name?.toLowerCase().includes(query) ||
+        game.home_team?.toLowerCase().includes(query) ||
+        game.away_team?.toLowerCase().includes(query) ||
+        game.sport?.toLowerCase().includes(query)
+      ).slice(0, 5);
+
+      // Search transactions
+      const matchingTransactions = allTransactions.filter(tx =>
+        tx.transaction_id?.toLowerCase().includes(query) ||
+        tx.type?.toLowerCase().includes(query) ||
+        tx.profiles?.email?.toLowerCase().includes(query) ||
+        tx.amount?.toString().includes(query)
+      ).slice(0, 5);
+
+      setSearchResults({
+        users: matchingUsers,
+        games: matchingGames,
+        transactions: matchingTransactions
+      });
+    };
+
+    const timeoutId = setTimeout(performSearch, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, allUsers, games, allTransactions]);
 
   const loadAdminData = async () => {
     try {
@@ -295,6 +346,104 @@ export default function AdminPage() {
     }
   };
 
+  // Bulk operations functions
+  const handleBulkBalanceAdjustment = async () => {
+    if (selectedUsers.length === 0 || !bulkAmount) {
+      alert('Please select users and enter an amount');
+      return;
+    }
+
+    const amount = parseInt(bulkAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid positive amount');
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to ${bulkType} $${amount} ${bulkType === 'add' ? 'to' : 'from'} ${selectedUsers.length} users?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      for (const userId of selectedUsers) {
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) continue;
+
+        const newBalance = bulkType === 'add' 
+          ? user.hotcoin_balance + amount 
+          : Math.max(0, user.hotcoin_balance - amount);
+
+        // Update user balance
+        await supabase
+          .from('profiles')
+          .update({ hotcoin_balance: newBalance })
+          .eq('id', userId);
+
+        // Create transaction record
+        await supabase
+          .from('hotcoin_transactions')
+          .insert({
+            user_id: userId,
+            type: bulkType === 'add' ? 'purchase' : 'refund',
+            amount: amount,
+            description: `Bulk ${bulkType === 'add' ? 'credit' : 'debit'} by admin${bulkMessage ? ': ' + bulkMessage : ''}`,
+            verification_status: 'approved',
+            verified_by: user.id,
+            verified_at: new Date().toISOString()
+          });
+      }
+
+      alert(`Successfully ${bulkType === 'add' ? 'added' : 'subtracted'} $${amount} ${bulkType === 'add' ? 'to' : 'from'} ${selectedUsers.length} users`);
+      setSelectedUsers([]);
+      setBulkAmount('');
+      setBulkMessage('');
+      setShowBulkOps(false);
+      loadAdminData();
+    } catch (error) {
+      console.error('Bulk operation error:', error);
+      alert('Failed to complete bulk operation');
+    }
+  };
+
+  const handleBulkGameDeletion = async () => {
+    const inactiveGames = games.filter(g => !g.is_active);
+    if (inactiveGames.length === 0) {
+      alert('No inactive games to delete');
+      return;
+    }
+
+    if (!confirm(`Delete all ${inactiveGames.length} inactive games? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      for (const game of inactiveGames) {
+        await supabase.from('boxes').delete().eq('game_id', game.id);
+        await supabase.from('games').delete().eq('id', game.id);
+      }
+      
+      alert(`Successfully deleted ${inactiveGames.length} inactive games`);
+      loadAdminData();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      alert('Failed to delete games');
+    }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const selectAllUsers = () => {
+    setSelectedUsers(allUsers.map(u => u.id));
+  };
+
+  const clearUserSelection = () => {
+    setSelectedUsers([]);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -330,6 +479,12 @@ export default function AdminPage() {
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
           </select>
+          <button
+            onClick={() => setShowBulkOps(!showBulkOps)}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            Bulk Operations
+          </button>
           <Link
             href="/admin/games/create"
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
@@ -338,6 +493,193 @@ export default function AdminPage() {
           </Link>
         </div>
       </div>
+
+      {/* Universal Search Bar */}
+      <div className="mb-8">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 Search users, games, transactions, or IDs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Search Results */}
+        {searchQuery && Object.keys(searchResults).length > 0 && (
+          <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+            {searchResults.users && searchResults.users.length > 0 && (
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">👥 Users ({searchResults.users.length})</h3>
+                {searchResults.users.map((user: any) => (
+                  <div key={user.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => toggleUserSelection(user.id)}
+                        className="h-4 w-4 text-indigo-600 rounded"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user.username || user.email}</p>
+                        <p className="text-xs text-gray-500">${user.hotcoin_balance || 0} HC • {user.email}</p>
+                      </div>
+                    </div>
+                    <Link href={`/admin/users/${user.id}`} className="text-indigo-600 hover:text-indigo-800 text-sm">View</Link>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchResults.games && searchResults.games.length > 0 && (
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">🎮 Games ({searchResults.games.length})</h3>
+                {searchResults.games.map((game: any) => (
+                  <div key={game.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{game.name}</p>
+                      <p className="text-xs text-gray-500">{game.sport} • {game.home_team} vs {game.away_team}</p>
+                    </div>
+                    <Link href={`/admin/games/${game.id}`} className="text-indigo-600 hover:text-indigo-800 text-sm">Manage</Link>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchResults.transactions && searchResults.transactions.length > 0 && (
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">💰 Transactions ({searchResults.transactions.length})</h3>
+                {searchResults.transactions.map((tx: any) => (
+                  <div key={tx.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        ${tx.amount} - {tx.type} {tx.transaction_id ? `(${tx.transaction_id})` : ''}
+                      </p>
+                      <p className="text-xs text-gray-500">{tx.profiles?.email} • {new Date(tx.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      tx.verification_status === 'approved' ? 'bg-green-100 text-green-800' :
+                      tx.verification_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {tx.verification_status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Bulk Operations Panel */}
+      {showBulkOps && (
+        <div className="mb-8 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
+          <h2 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-4">🔧 Bulk Operations</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* User Operations */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-4">👥 User Operations</h3>
+              
+              <div className="space-y-4">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={selectAllUsers}
+                    className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200"
+                  >
+                    Select All Users ({allUsers.length})
+                  </button>
+                  <button
+                    onClick={clearUserSelection}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  Selected: {selectedUsers.length} users
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex space-x-2">
+                    <select
+                      value={bulkType}
+                      onChange={(e) => setBulkType(e.target.value as 'add' | 'subtract')}
+                      className="px-3 py-2 border rounded text-sm"
+                    >
+                      <option value="add">Add Balance</option>
+                      <option value="subtract">Subtract Balance</option>
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      value={bulkAmount}
+                      onChange={(e) => setBulkAmount(e.target.value)}
+                      className="px-3 py-2 border rounded text-sm w-32"
+                    />
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Optional reason/message"
+                    value={bulkMessage}
+                    onChange={(e) => setBulkMessage(e.target.value)}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                  />
+
+                  <button
+                    onClick={handleBulkBalanceAdjustment}
+                    disabled={selectedUsers.length === 0 || !bulkAmount}
+                    className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-2 rounded text-sm font-medium"
+                  >
+                    {bulkType === 'add' ? 'Add' : 'Subtract'} ${bulkAmount || 0} {bulkType === 'add' ? 'to' : 'from'} {selectedUsers.length} users
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Game Operations */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-4">🎮 Game Operations</h3>
+              
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600">
+                  Inactive games: {games.filter(g => !g.is_active).length}
+                </div>
+
+                <button
+                  onClick={handleBulkGameDeletion}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded text-sm font-medium"
+                >
+                  Delete All Inactive Games
+                </button>
+
+                <div className="text-xs text-gray-500">
+                  This will permanently delete all games that are marked as inactive, including all associated boxes and data.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Critical Alerts */}
       {(pendingWithdrawals.length > 0 || pendingPayments.length > 0 || securityMetrics.suspiciousTransactions > 0) && (
