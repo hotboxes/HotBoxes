@@ -470,35 +470,6 @@ export default function AdminGamePage() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={async () => {
-                        console.log('=== TESTING UPDATE PERMISSIONS ===');
-                        try {
-                          // Test a simple update
-                          const { data, error } = await supabase
-                            .from('games')
-                            .update({ payout_q1: payoutValues.payout_q1 })
-                            .eq('id', id)
-                            .select();
-                          
-                          console.log('Update test result:', { data, error });
-                          
-                          if (error) {
-                            alert(`Update failed: ${error.message}`);
-                          } else if (!data || data.length === 0) {
-                            alert('Update failed: No rows updated (RLS policy issue)');
-                          } else {
-                            alert('Update test successful!');
-                          }
-                        } catch (err) {
-                          console.error('Update test error:', err);
-                          alert(`Update test error: ${err.message}`);
-                        }
-                      }}
-                      className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
-                    >
-                      Test Update
-                    </button>
-                    <button
                       onClick={handlePayoutCancel}
                       className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
