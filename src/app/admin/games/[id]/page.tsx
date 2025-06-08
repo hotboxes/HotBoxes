@@ -15,6 +15,14 @@ export default function AdminGamePage() {
   const [boxes, setBoxes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingPayouts, setEditingPayouts] = useState(false);
+  const [payoutValues, setPayoutValues] = useState({
+    payout_q1: 0,
+    payout_q2: 0,
+    payout_q3: 0,
+    payout_final: 0
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadAdminGameData();
@@ -57,6 +65,14 @@ export default function AdminGamePage() {
       }
 
       setGame(gameData);
+      
+      // Set payout values for editing
+      setPayoutValues({
+        payout_q1: gameData.payout_q1 || 0,
+        payout_q2: gameData.payout_q2 || 0,
+        payout_q3: gameData.payout_q3 || 0,
+        payout_final: gameData.payout_final || 0
+      });
 
       // Fetch game boxes and user info
       const { data: boxesData } = await supabase
@@ -73,6 +89,51 @@ export default function AdminGamePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePayoutSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({
+          payout_q1: payoutValues.payout_q1,
+          payout_q2: payoutValues.payout_q2,
+          payout_q3: payoutValues.payout_q3,
+          payout_final: payoutValues.payout_final
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local game state
+      setGame(prev => ({
+        ...prev,
+        payout_q1: payoutValues.payout_q1,
+        payout_q2: payoutValues.payout_q2,
+        payout_q3: payoutValues.payout_q3,
+        payout_final: payoutValues.payout_final
+      }));
+
+      setEditingPayouts(false);
+      alert('Payout amounts updated successfully!');
+    } catch (err: any) {
+      console.error('Error updating payouts:', err);
+      alert('Failed to update payout amounts. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePayoutCancel = () => {
+    // Reset to original values
+    setPayoutValues({
+      payout_q1: game?.payout_q1 || 0,
+      payout_q2: game?.payout_q2 || 0,
+      payout_q3: game?.payout_q3 || 0,
+      payout_final: game?.payout_final || 0
+    });
+    setEditingPayouts(false);
   };
 
   if (loading) {
@@ -291,43 +352,136 @@ export default function AdminGamePage() {
 
         {/* Prize Breakdown */}
         <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
+          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
               Prize Breakdown
             </h3>
+            {!editingPayouts && (
+              <button
+                onClick={() => setEditingPayouts(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm font-medium"
+              >
+                Edit Payouts
+              </button>
+            )}
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700 p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">1st Quarter</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {Math.floor(payoutPool * 0.25)} HC
-                </span>
+            {editingPayouts ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      1st Quarter
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={payoutValues.payout_q1}
+                      onChange={(e) => setPayoutValues(prev => ({ ...prev, payout_q1: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Halftime (2nd Quarter)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={payoutValues.payout_q2}
+                      onChange={(e) => setPayoutValues(prev => ({ ...prev, payout_q2: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      3rd Quarter
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={payoutValues.payout_q3}
+                      onChange={(e) => setPayoutValues(prev => ({ ...prev, payout_q3: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Final Score
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={payoutValues.payout_final}
+                      onChange={(e) => setPayoutValues(prev => ({ ...prev, payout_final: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Payout: {payoutValues.payout_q1 + payoutValues.payout_q2 + payoutValues.payout_q3 + payoutValues.payout_final} HC
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handlePayoutCancel}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handlePayoutSave}
+                      disabled={saving}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-md text-sm font-medium"
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Halftime</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {Math.floor(payoutPool * 0.25)} HC
-                </span>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">1st Quarter</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {game?.payout_q1 || 0} HC
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Halftime (2nd Quarter)</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {game?.payout_q2 || 0} HC
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">3rd Quarter</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {game?.payout_q3 || 0} HC
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Final Score</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {game?.payout_final || 0} HC
+                  </span>
+                </div>
+                <hr className="border-gray-200 dark:border-gray-700" />
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Prize Pool</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {(game?.payout_q1 || 0) + (game?.payout_q2 || 0) + (game?.payout_q3 || 0) + (game?.payout_final || 0)} HC
+                  </span>
+                </div>
+                {game?.entry_fee > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Revenue vs Payouts</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {totalRevenue} HC collected → {(game?.payout_q1 || 0) + (game?.payout_q2 || 0) + (game?.payout_q3 || 0) + (game?.payout_final || 0)} HC prizes
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">3rd Quarter</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {Math.floor(payoutPool * 0.25)} HC
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Final Score</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {Math.floor(payoutPool * 0.25)} HC
-                </span>
-              </div>
-              <hr className="border-gray-200 dark:border-gray-700" />
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">House Cut (10%)</span>
-                <span className="font-medium text-gray-900 dark:text-white">{houseCut} HC</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
