@@ -27,16 +27,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Right side - Contact */}
-          <div className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400">
-            <span>Support:</span>
-            <a
-              href="mailto:playhotboxeslive@gmail.com"
-              className="hover:text-indigo-600 dark:hover:text-indigo-400"
-            >
-              playhotboxeslive@gmail.com
-            </a>
-          </div>
         </div>
 
         {/* Bottom section - Legal notice */}
