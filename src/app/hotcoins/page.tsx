@@ -10,6 +10,9 @@ export default function HotCoinsPage() {
   const [loading, setLoading] = useState(true);
   const [purchaseAmount, setPurchaseAmount] = useState(10);
   const [purchasing, setPurchasing] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentRef, setPaymentRef] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -51,19 +54,28 @@ export default function HotCoinsPage() {
     }
 
     // Generate unique payment reference
-    const paymentRef = `HC-${user?.id?.slice(-8)}-${Date.now()}`;
+    const newPaymentRef = `HC-${user?.id?.slice(-8)}-${Date.now()}`;
+    setPaymentRef(newPaymentRef);
+    setShowPaymentModal(true);
+  };
+
+  const handleCashAppRedirect = () => {
+    // Try CashApp deep link - this should work better on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Open CashApp with pre-filled payment
-    const cashAppUrl = `https://cash.app/$playhotboxes/${purchaseAmount}/${paymentRef}`;
-    window.open(cashAppUrl, '_blank');
-    
-    // Show transaction ID input modal
-    const transactionId = prompt(
-      `After completing your CashApp payment of $${purchaseAmount} to $playhotboxes, please enter your transaction ID (starts with "CR" or similar):`
-    );
-    
-    if (!transactionId) {
-      return; // User cancelled
+    if (isMobile) {
+      // Mobile: Use CashApp deep link that should pre-fill recipient
+      window.location.href = `https://cash.app/$playhotboxes/${purchaseAmount}`;
+    } else {
+      // Desktop: Open CashApp web (user will need to manually enter details)
+      window.open('https://cash.app/$playhotboxes', '_blank');
+    }
+  };
+
+  const submitTransaction = async () => {
+    if (!transactionId.trim()) {
+      alert('Please enter your transaction ID');
+      return;
     }
     
     setPurchasing(true);
@@ -72,7 +84,7 @@ export default function HotCoinsPage() {
       const { data: existingTransaction } = await supabase
         .from('hotcoin_transactions')
         .select('id')
-        .eq('transaction_id', transactionId)
+        .eq('transaction_id', transactionId.trim())
         .single();
         
       if (existingTransaction) {
@@ -92,9 +104,9 @@ export default function HotCoinsPage() {
           user_id: user?.id,
           type: 'purchase',
           amount: purchaseAmount,
-          description: `CashApp purchase of ${purchaseAmount} HotCoins`,
+          description: `CashApp purchase of ${purchaseAmount} HotCoins (Ref: ${paymentRef})`,
           payment_method: 'cashapp',
-          transaction_id: transactionId,
+          transaction_id: transactionId.trim(),
           verification_status: verificationStatus,
           auto_approved: autoApproved
         }]);
@@ -129,13 +141,17 @@ export default function HotCoinsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount: purchaseAmount,
-            transactionId,
+            transactionId: transactionId.trim(),
             userEmail: user?.email,
-            userId: user?.id
+            userId: user?.id,
+            paymentRef
           })
         });
       }
       
+      // Reset form
+      setShowPaymentModal(false);
+      setTransactionId('');
       setPurchaseAmount(10);
     } catch (error) {
       console.error('Error processing payment:', error);
@@ -293,6 +309,73 @@ export default function HotCoinsPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Complete Your Payment
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-md">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Payment Details:</strong>
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Send: <strong>${purchaseAmount}</strong><br/>
+                  To: <strong>$playhotboxes</strong><br/>
+                  Reference: <strong>{paymentRef}</strong>
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  1. Click the button below to open CashApp
+                </p>
+                <button
+                  onClick={handleCashAppRedirect}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium flex items-center justify-center space-x-2"
+                >
+                  <span>📱</span>
+                  <span>Open CashApp & Pay $playhotboxes</span>
+                </button>
+                
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  2. After completing the payment, enter your transaction ID below:
+                </p>
+                <input
+                  type="text"
+                  placeholder="Enter transaction ID (e.g., CR123456789)"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setTransactionId('');
+                  }}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-md font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitTransaction}
+                  disabled={purchasing || !transactionId.trim()}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white py-2 px-4 rounded-md font-medium"
+                >
+                  {purchasing ? 'Processing...' : 'Verify Payment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
