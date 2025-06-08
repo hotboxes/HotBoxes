@@ -2,6 +2,7 @@ import type { Metadata } from "next";
   import { Geist, Geist_Mono } from "next/font/google";
   import "./globals.css";
   import Navigation from "@/components/Navigation";
+  import Footer from "@/components/Footer";
 
   const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -29,9 +30,12 @@ import type { Metadata } from "next";
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 
-  dark:from-gray-900 dark:to-gray-800">
+  dark:from-gray-900 dark:to-gray-800 flex flex-col">
             <Navigation user={null} />
-            {children}
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
           </div>
         </body>
       </html>
