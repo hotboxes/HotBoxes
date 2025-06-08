@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   
   // Profile form states
   const [username, setUsername] = useState('');
@@ -21,17 +21,6 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Preferences form states
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [gameAlerts, setGameAlerts] = useState(true);
-  const [winningAlerts, setWinningAlerts] = useState(true);
-  const [marketingEmails, setMarketingEmails] = useState(false);
-  
-  // Responsible gambling settings
-  const [dailySpendLimit, setDailySpendLimit] = useState<number | ''>('');
-  const [weeklySpendLimit, setWeeklySpendLimit] = useState<number | ''>('');
-  const [timeLimit, setTimeLimit] = useState<number | ''>('');
-  const [selfExclusionDays, setSelfExclusionDays] = useState<number | ''>('');
   
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const router = useRouter();
@@ -62,14 +51,6 @@ export default function SettingsPage() {
       if (profileData) {
         setProfile(profileData);
         setUsername(profileData.username || '');
-        setEmailNotifications(profileData.email_notifications ?? true);
-        setGameAlerts(profileData.game_alerts ?? true);
-        setWinningAlerts(profileData.winning_alerts ?? true);
-        setMarketingEmails(profileData.marketing_emails ?? false);
-        setDailySpendLimit(profileData.daily_spend_limit || '');
-        setWeeklySpendLimit(profileData.weekly_spend_limit || '');
-        setTimeLimit(profileData.session_time_limit || '');
-        setSelfExclusionDays(profileData.self_exclusion_days || '');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -153,39 +134,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handlePreferencesUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          email_notifications: emailNotifications,
-          game_alerts: gameAlerts,
-          winning_alerts: winningAlerts,
-          marketing_emails: marketingEmails,
-          daily_spend_limit: dailySpendLimit || null,
-          weekly_spend_limit: weeklySpendLimit || null,
-          session_time_limit: timeLimit || null,
-          self_exclusion_days: selfExclusionDays || null,
-          self_exclusion_until: selfExclusionDays ? 
-            new Date(Date.now() + (Number(selfExclusionDays) * 24 * 60 * 60 * 1000)).toISOString() : 
-            null
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      showMessage('success', 'Preferences updated successfully!');
-      await loadUserData();
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-      showMessage('error', `Failed to update preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -202,7 +150,7 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
           <p className="mt-1 text-lg text-gray-500 dark:text-gray-400">
-            Manage your account preferences and security settings
+            Manage your account profile and security settings
           </p>
         </div>
         <Link
@@ -229,8 +177,7 @@ export default function SettingsPage() {
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'profile', label: '👤 Profile', description: 'Username & Email' },
-            { key: 'security', label: '🔒 Security', description: 'Password & Login' },
-            { key: 'preferences', label: '⚙️ Preferences', description: 'Notifications & Limits' }
+            { key: 'security', label: '🔒 Security', description: 'Password & Login' }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -366,172 +313,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Preferences Tab */}
-      {activeTab === 'preferences' && (
-        <div className="space-y-6">
-          {/* Notification Preferences */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Notification Preferences</h2>
-            
-            <form onSubmit={handlePreferencesUpdate} className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <input
-                    id="emailNotifications"
-                    type="checkbox"
-                    checked={emailNotifications}
-                    onChange={(e) => setEmailNotifications(e.target.checked)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="emailNotifications" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email Notifications
-                  </label>
-                </div>
-                <p className="text-sm text-gray-500 ml-7">Receive general account and security notifications via email.</p>
-
-                <div className="flex items-center">
-                  <input
-                    id="gameAlerts"
-                    type="checkbox"
-                    checked={gameAlerts}
-                    onChange={(e) => setGameAlerts(e.target.checked)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="gameAlerts" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Game Alerts
-                  </label>
-                </div>
-                <p className="text-sm text-gray-500 ml-7">Get notified when games start, end, or when numbers are assigned.</p>
-
-                <div className="flex items-center">
-                  <input
-                    id="winningAlerts"
-                    type="checkbox"
-                    checked={winningAlerts}
-                    onChange={(e) => setWinningAlerts(e.target.checked)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="winningAlerts" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Winning Alerts
-                  </label>
-                </div>
-                <p className="text-sm text-gray-500 ml-7">Receive notifications when you win payouts or prizes.</p>
-
-                <div className="flex items-center">
-                  <input
-                    id="marketingEmails"
-                    type="checkbox"
-                    checked={marketingEmails}
-                    onChange={(e) => setMarketingEmails(e.target.checked)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="marketingEmails" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Marketing Emails
-                  </label>
-                </div>
-                <p className="text-sm text-gray-500 ml-7">Receive promotional offers and platform updates.</p>
-              </div>
-            </form>
-          </div>
-
-          {/* Responsible Gambling Settings */}
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-red-800 dark:text-red-200 mb-6">🛡️ Responsible Gambling Controls</h2>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="dailySpendLimit" className="block text-sm font-medium text-red-700 dark:text-red-300">
-                    Daily Spending Limit ($)
-                  </label>
-                  <input
-                    type="number"
-                    id="dailySpendLimit"
-                    value={dailySpendLimit}
-                    onChange={(e) => setDailySpendLimit(e.target.value ? Number(e.target.value) : '')}
-                    className="mt-1 block w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:text-white"
-                    placeholder="e.g., 100"
-                    min="1"
-                    max="1000"
-                  />
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">Maximum amount you can spend per day.</p>
-                </div>
-
-                <div>
-                  <label htmlFor="weeklySpendLimit" className="block text-sm font-medium text-red-700 dark:text-red-300">
-                    Weekly Spending Limit ($)
-                  </label>
-                  <input
-                    type="number"
-                    id="weeklySpendLimit"
-                    value={weeklySpendLimit}
-                    onChange={(e) => setWeeklySpendLimit(e.target.value ? Number(e.target.value) : '')}
-                    className="mt-1 block w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:text-white"
-                    placeholder="e.g., 500"
-                    min="1"
-                    max="5000"
-                  />
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">Maximum amount you can spend per week.</p>
-                </div>
-
-                <div>
-                  <label htmlFor="timeLimit" className="block text-sm font-medium text-red-700 dark:text-red-300">
-                    Session Time Limit (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    id="timeLimit"
-                    value={timeLimit}
-                    onChange={(e) => setTimeLimit(e.target.value ? Number(e.target.value) : '')}
-                    className="mt-1 block w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:text-white"
-                    placeholder="e.g., 120"
-                    min="15"
-                    max="480"
-                  />
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">Maximum time per session (15-480 minutes).</p>
-                </div>
-
-                <div>
-                  <label htmlFor="selfExclusionDays" className="block text-sm font-medium text-red-700 dark:text-red-300">
-                    Self-Exclusion (days)
-                  </label>
-                  <input
-                    type="number"
-                    id="selfExclusionDays"
-                    value={selfExclusionDays}
-                    onChange={(e) => setSelfExclusionDays(e.target.value ? Number(e.target.value) : '')}
-                    className="mt-1 block w-full px-3 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:text-white"
-                    placeholder="e.g., 30"
-                    min="1"
-                    max="365"
-                  />
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">Temporarily exclude yourself from the platform (1-365 days).</p>
-                </div>
-              </div>
-
-              <div className="bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">⚠️ Important Notice</h4>
-                <p className="text-sm text-red-700 dark:text-red-300">
-                  These limits help promote responsible gambling. Once set, spending limits cannot be increased for 24 hours. 
-                  Self-exclusion periods cannot be reversed until they expire. If you're struggling with gambling, please seek help 
-                  at <a href="https://www.ncpgambling.org" target="_blank" rel="noopener noreferrer" className="underline">ncpgambling.org</a>.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={handlePreferencesUpdate}
-              disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {saving ? 'Saving...' : 'Save Preferences'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
