@@ -996,7 +996,7 @@ export default function AdminPage() {
           </h3>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 p-4">
             <Link href="/admin/games/create" className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">🏈</div>
               <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Add NFL Game</div>
@@ -1012,6 +1012,10 @@ export default function AdminPage() {
             <Link href="/admin/users" className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">👥</div>
               <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Users</div>
+            </Link>
+            <Link href="/admin/analytics" className="bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">📊</div>
+              <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Analytics</div>
             </Link>
             <Link href="/admin/cron-test" className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">⚙️</div>
