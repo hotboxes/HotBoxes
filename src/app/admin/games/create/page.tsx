@@ -9,7 +9,11 @@
     const [homeTeam, setHomeTeam] = useState('');
     const [awayTeam, setAwayTeam] = useState('');
     const [sport, setSport] = useState<'NFL' | 'NBA'>('NFL');
-    const [gameDate, setGameDate] = useState('');
+    const [gameDate, setGameDate] = useState(() => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      return now.toISOString().slice(0, 16);
+    });
     const [entryFee, setEntryFee] = useState(0);
     const [payoutQ1, setPayoutQ1] = useState(25);
     const [payoutQ2, setPayoutQ2] = useState(25);
@@ -64,7 +68,7 @@
               home_team: homeTeam,
               away_team: awayTeam,
               sport,
-              game_date: gameDate,
+              game_date: new Date(gameDate).toISOString(),
               entry_fee: entryFee,
               home_scores: [],
               away_scores: [],
