@@ -51,15 +51,35 @@
       setError(null);
       setLoading(true);
 
+      console.log('Starting game creation...', {
+        name,
+        homeTeam,
+        awayTeam,
+        sport,
+        gameDate,
+        entryFee,
+        payouts: { payoutQ1, payoutQ2, payoutQ3, payoutFinal }
+      });
+
+      // Add timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        console.error('Game creation timeout - taking too long');
+        setError('Game creation timed out. Please try again.');
+        setLoading(false);
+      }, 15000); // 15 second timeout
+
       try {
+        console.log('Checking user authentication...');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
+          console.log('User not authenticated');
           setError('You must be logged in');
           setLoading(false);
           return;
         }
 
+        console.log('User authenticated, creating game record...');
         const { data: game, error: gameError } = await supabase
           .from('games')
           .insert([
@@ -93,34 +113,49 @@
           return;
         }
 
-        // Create boxes for the game
-        const boxes = [];
-        for (let row = 0; row < 10; row++) {
-          for (let col = 0; col < 10; col++) {
-            boxes.push({
-              id: `${game.id}-${row}-${col}`,
-              row,
-              col,
-              user_id: null,
-              game_id: game.id,
-            });
+        console.log('Game record created successfully:', game);
+
+        // Create boxes for the game (non-blocking)
+        console.log('Creating game boxes...');
+        try {
+          const boxes = [];
+          for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 10; col++) {
+              boxes.push({
+                id: `${game.id}-${row}-${col}`,
+                row,
+                col,
+                user_id: null,
+                game_id: game.id,
+              });
+            }
           }
+
+          const { error: boxesError } = await supabase
+            .from('boxes')
+            .insert(boxes);
+
+          if (boxesError) {
+            console.error('Boxes creation error (non-critical):', boxesError);
+            // Don't fail game creation if boxes creation fails
+          } else {
+            console.log('Game boxes created successfully');
+          }
+        } catch (boxError) {
+          console.error('Box creation failed but continuing:', boxError);
+          // Continue with game creation even if boxes fail
         }
 
-        const { error: boxesError } = await supabase
-          .from('boxes')
-          .insert(boxes);
-
-        if (boxesError) {
-          console.error('Boxes creation error:', boxesError);
-          // Don't fail if boxes creation fails
-        }
-
+        console.log('Game creation completed successfully');
+        clearTimeout(timeoutId); // Clear timeout on success
         alert(`Game created: ${game.name}`);
+        
+        console.log('Redirecting to admin dashboard...');
         router.push('/admin');
 
       } catch (err: any) {
         console.error('Full error:', err);
+        clearTimeout(timeoutId); // Clear timeout on error
         setError(`Error: ${err.message}`);
       } finally {
         setLoading(false);
