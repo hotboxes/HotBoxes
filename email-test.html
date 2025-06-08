@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Delivery Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Email Delivery Test</h1>
+    <form id="testForm">
+        <input type="email" id="email" placeholder="Test email" required>
+        <button type="submit">Test Signup</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        const supabase = window.supabase.createClient(
+            'https://ljyeewnjtkcvbrjjpzyw.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqeWVld25qdGtjdmJyamp6eXciLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczMzI2MTEwMCwiZXhwIjoyMDQ4ODM3MTAwfQ.lGJzgn0vQfI7GyIZMxYbRCaQpIwhCnOPjrg-x2U3V30'
+        );
+
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const result = document.getElementById('result');
+            
+            result.innerHTML = 'Testing signup...';
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: 'testpassword123',
+                    options: {
+                        data: {
+                            username: 'testuser'
+                        }
+                    }
+                });
+                
+                console.log('Signup result:', { data, error });
+                
+                if (error) {
+                    result.innerHTML = `
+                        <h3>❌ Error:</h3>
+                        <p>${error.message}</p>
+                        <p>Code: ${error.status || 'Unknown'}</p>
+                    `;
+                } else if (data?.user && !data.user.email_confirmed_at) {
+                    result.innerHTML = `
+                        <h3>✅ User Created Successfully!</h3>
+                        <p>Email confirmation required for: ${email}</p>
+                        <p>User ID: ${data.user.id}</p>
+                        <p>Check your email (including spam folder) for confirmation link.</p>
+                        <p><strong>Look for email from:</strong> noreply@ljyeewnjtkcvbrjjpzyw.supabase.co</p>
+                    `;
+                } else if (data?.user && data.user.email_confirmed_at) {
+                    result.innerHTML = `
+                        <h3>⚠️ User Auto-Confirmed</h3>
+                        <p>Email confirmation might be disabled in Supabase settings.</p>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <h3>❓ Unexpected Response</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+                
+            } catch (err) {
+                result.innerHTML = `
+                    <h3>❌ Test Failed:</h3>
+                    <p>${err.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

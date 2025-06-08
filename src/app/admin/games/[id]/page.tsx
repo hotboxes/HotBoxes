@@ -471,18 +471,32 @@ export default function AdminGamePage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={async () => {
-                        console.log('=== TESTING ADMIN PERMISSIONS ===');
-                        const { data: { user } } = await supabase.auth.getUser();
-                        console.log('User:', user?.id);
-                        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-                        console.log('Profile:', profile);
-                        const { data: games } = await supabase.from('games').select('*').eq('id', id);
-                        console.log('Can read game:', games);
-                        alert(`Admin: ${profile?.is_admin}, Game found: ${!!games?.length}`);
+                        console.log('=== TESTING UPDATE PERMISSIONS ===');
+                        try {
+                          // Test a simple update
+                          const { data, error } = await supabase
+                            .from('games')
+                            .update({ payout_q1: payoutValues.payout_q1 })
+                            .eq('id', id)
+                            .select();
+                          
+                          console.log('Update test result:', { data, error });
+                          
+                          if (error) {
+                            alert(`Update failed: ${error.message}`);
+                          } else if (!data || data.length === 0) {
+                            alert('Update failed: No rows updated (RLS policy issue)');
+                          } else {
+                            alert('Update test successful!');
+                          }
+                        } catch (err) {
+                          console.error('Update test error:', err);
+                          alert(`Update test error: ${err.message}`);
+                        }
                       }}
                       className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
                     >
-                      Debug
+                      Test Update
                     </button>
                     <button
                       onClick={handlePayoutCancel}
