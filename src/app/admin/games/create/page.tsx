@@ -66,7 +66,7 @@
         console.error('Game creation timeout - taking too long');
         setError('Game creation timed out. Please try again.');
         setLoading(false);
-      }, 15000); // 15 second timeout
+      }, 10000); // 10 second timeout for faster testing
 
       try {
         console.log('Checking user authentication...');
@@ -81,66 +81,29 @@
 
         console.log('User authenticated, creating game record...');
         
-        // First try with payout columns, fall back without them if they don't exist
-        let game, gameError;
-        try {
-          console.log('Attempting game creation with payout columns...');
-          const result = await supabase
-            .from('games')
-            .insert([
-              {
-                name,
-                home_team: homeTeam,
-                away_team: awayTeam,
-                sport,
-                game_date: new Date(gameDate).toISOString(),
-                entry_fee: entryFee,
-                home_scores: [],
-                away_scores: [],
-                home_numbers: [],
-                away_numbers: [],
-                payout_q1: payoutQ1,
-                payout_q2: payoutQ2,
-                payout_q3: payoutQ3,
-                payout_final: payoutFinal,
-                is_active: true,
-                numbers_assigned: false,
-                created_by: user.id,
-              },
-            ])
-            .select()
-            .single();
+        // Test with minimal data first
+        console.log('Attempting minimal game creation...');
+        const gameData = {
+          name,
+          home_team: homeTeam,
+          away_team: awayTeam,
+          sport,
+          game_date: new Date(gameDate).toISOString(),
+          entry_fee: entryFee,
+          is_active: true,
+          numbers_assigned: false,
+          created_by: user.id,
+        };
+        
+        console.log('Game data to insert:', gameData);
+        
+        const { data: game, error: gameError } = await supabase
+          .from('games')
+          .insert([gameData])
+          .select()
+          .single();
           
-          game = result.data;
-          gameError = result.error;
-        } catch (err) {
-          console.log('Payout columns failed, trying without them...', err);
-          // Try without payout columns if they don't exist
-          const result = await supabase
-            .from('games')
-            .insert([
-              {
-                name,
-                home_team: homeTeam,
-                away_team: awayTeam,
-                sport,
-                game_date: new Date(gameDate).toISOString(),
-                entry_fee: entryFee,
-                home_scores: [],
-                away_scores: [],
-                home_numbers: [],
-                away_numbers: [],
-                is_active: true,
-                numbers_assigned: false,
-                created_by: user.id,
-              },
-            ])
-            .select()
-            .single();
-          
-          game = result.data;
-          gameError = result.error;
-        }
+        console.log('Insert result:', { game, gameError });
 
         if (gameError) {
           console.error('Game creation error:', gameError);
@@ -151,36 +114,8 @@
 
         console.log('Game record created successfully:', game);
 
-        // Create boxes for the game (non-blocking)
-        console.log('Creating game boxes...');
-        try {
-          const boxes = [];
-          for (let row = 0; row < 10; row++) {
-            for (let col = 0; col < 10; col++) {
-              boxes.push({
-                id: `${game.id}-${row}-${col}`,
-                row,
-                col,
-                user_id: null,
-                game_id: game.id,
-              });
-            }
-          }
-
-          const { error: boxesError } = await supabase
-            .from('boxes')
-            .insert(boxes);
-
-          if (boxesError) {
-            console.error('Boxes creation error (non-critical):', boxesError);
-            // Don't fail game creation if boxes creation fails
-          } else {
-            console.log('Game boxes created successfully');
-          }
-        } catch (boxError) {
-          console.error('Box creation failed but continuing:', boxError);
-          // Continue with game creation even if boxes fail
-        }
+        // TEMPORARILY DISABLED - Skip box creation to test if this is causing the hang
+        console.log('Skipping box creation for testing...');
 
         console.log('Game creation completed successfully');
         clearTimeout(timeoutId); // Clear timeout on success
