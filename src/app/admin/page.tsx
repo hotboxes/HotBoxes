@@ -538,7 +538,7 @@ export default function AdminPage() {
                       />
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{user.username || user.email}</p>
-                        <p className="text-xs text-gray-500">${user.hotcoin_balance || 0} HC • {user.email}</p>
+                        <p className="text-xs text-gray-500">{user.hotcoin_balance || 0} HC • {user.email}</p>
                       </div>
                     </div>
                     <Link href={`/admin/users/${user.id}`} className="text-indigo-600 hover:text-indigo-800 text-sm">View</Link>
@@ -569,7 +569,7 @@ export default function AdminPage() {
                   <div key={tx.id} className="flex items-center justify-between py-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        ${tx.amount} - {tx.type} {tx.transaction_id ? `(${tx.transaction_id})` : ''}
+                        {tx.amount} HC - {tx.type} {tx.transaction_id ? `(${tx.transaction_id})` : ''}
                       </p>
                       <p className="text-xs text-gray-500">{tx.profiles?.email} • {new Date(tx.created_at).toLocaleDateString()}</p>
                     </div>
@@ -704,7 +704,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600 dark:text-green-400">Revenue</p>
-                <p className="text-2xl font-bold text-green-900 dark:text-green-100">${financialMetrics.revenue}</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{financialMetrics.revenue} HC</p>
               </div>
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">📈</span>
@@ -716,7 +716,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Net Profit</p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">${financialMetrics.profit}</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{financialMetrics.profit} HC</p>
               </div>
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">💎</span>
@@ -728,7 +728,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Withdrawals</p>
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">${financialMetrics.withdrawals}</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{financialMetrics.withdrawals} HC</p>
               </div>
               <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">💸</span>
@@ -740,7 +740,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg Transaction</p>
-                <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">${Math.round(financialMetrics.avgTransactionSize)}</p>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{Math.round(financialMetrics.avgTransactionSize)} HC</p>
               </div>
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">🎯</span>
@@ -785,7 +785,7 @@ export default function AdminPage() {
                     <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
                     <span className="text-sm text-gray-900 dark:text-white">{user.username || user.email}</span>
                   </div>
-                  <span className="text-sm font-bold text-green-600">${user.hotcoin_balance || 0}</span>
+                  <span className="text-sm font-bold text-green-600">{user.hotcoin_balance || 0} HC</span>
                 </div>
               ))}
             </div>
@@ -815,7 +815,7 @@ export default function AdminPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">Top Game Revenue</p>
-            <p className="text-xl font-bold text-green-600">${gameAnalytics.gamePerformance[0]?.revenue || 0}</p>
+            <p className="text-xl font-bold text-green-600">{gameAnalytics.gamePerformance[0]?.revenue || 0} HC</p>
           </div>
         </div>
       </div>

@@ -236,7 +236,7 @@ export default function SettingsPage() {
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p><strong>Account ID:</strong> {user?.id?.substring(0, 8)}...</p>
                 <p><strong>Member Since:</strong> {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}</p>
-                <p><strong>Current Balance:</strong> ${profile?.hotcoin_balance || 0}</p>
+                <p><strong>Current Balance:</strong> {profile?.hotcoin_balance || 0} HC</p>
               </div>
             </div>
 

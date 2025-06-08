@@ -143,7 +143,7 @@ export default function DashboardPage() {
     if (stats.gamesPlayed >= 1) achievements.push({ name: 'First Timer', icon: '🎯', description: 'Played your first game' });
     if (stats.gamesPlayed >= 10) achievements.push({ name: 'Regular Player', icon: '🎮', description: 'Played 10+ games' });
     if (stats.totalWon > 0) achievements.push({ name: 'Winner', icon: '🏆', description: 'Won your first payout' });
-    if (stats.biggestWin >= 100) achievements.push({ name: 'Big Winner', icon: '💎', description: 'Won $100+ in a single game' });
+    if (stats.biggestWin >= 100) achievements.push({ name: 'Big Winner', icon: '💎', description: 'Won 100+ HC in a single game' });
     if (stats.totalDeposited >= 100) achievements.push({ name: 'High Roller', icon: '💰', description: 'Deposited $100+' });
     if (stats.winRate >= 50) achievements.push({ name: 'Lucky Streak', icon: '🍀', description: 'Win rate over 50%' });
     if (stats.topSport !== 'None') achievements.push({ name: `${stats.topSport} Fan`, icon: stats.topSport === 'NFL' ? '🏈' : '🏀', description: `Prefers ${stats.topSport} games` });
@@ -243,7 +243,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-indigo-100">HotCoin Balance</p>
-              <p className="text-2xl font-bold">${profile?.hotcoin_balance || 0}</p>
+              <p className="text-2xl font-bold">{profile?.hotcoin_balance || 0} HC</p>
             </div>
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">💰</span>
@@ -267,7 +267,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Total Winnings</p>
-              <p className="text-2xl font-bold">${stats.totalWon}</p>
+              <p className="text-2xl font-bold">{stats.totalWon} HC</p>
             </div>
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">🏆</span>
@@ -324,7 +324,7 @@ export default function DashboardPage() {
 
                     <div className="mb-4">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        Your Boxes: {gameBoxes.length} (${gameBoxes.length * game.entry_fee} invested)
+                        Your Boxes: {gameBoxes.length} ({gameBoxes.length * game.entry_fee} HC invested)
                       </p>
                       
                       {game.numbers_assigned && (
@@ -358,7 +358,7 @@ export default function DashboardPage() {
                         <h4 className="text-sm font-bold text-green-800 dark:text-green-200 mb-2">🏆 You're Winning!</h4>
                         {winningStatus.map((win, index) => (
                           <p key={index} className="text-sm text-green-700 dark:text-green-300">
-                            Q{win.quarter}: ${win.amount}
+                            Q{win.quarter}: {win.amount} HC
                           </p>
                         ))}
                       </div>
@@ -410,7 +410,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-center">
-              <p className="text-3xl font-bold text-green-600">${stats.netWinnings}</p>
+              <p className="text-3xl font-bold text-green-600">{stats.netWinnings} HC</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Net Winnings</p>
             </div>
           </div>
@@ -422,7 +422,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-center">
-              <p className="text-3xl font-bold text-purple-600">${stats.biggestWin}</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.biggestWin} HC</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Biggest Win</p>
             </div>
           </div>
@@ -467,7 +467,7 @@ export default function DashboardPage() {
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       game.entry_fee === 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {game.entry_fee === 0 ? 'FREE' : `$${game.entry_fee}/box`}
+                      {game.entry_fee === 0 ? 'FREE' : `${game.entry_fee} HC/box`}
                     </span>
                     <span className="text-xs text-gray-500">{game.sport}</span>
                   </div>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
                            transaction.type === 'withdrawal' ? '💸 Withdrawal' :
                            transaction.type === 'payout' ? '🎉 Payout' :
                            transaction.type === 'bet' ? '🎮 Game Entry' : 
-                           '📝 ' + transaction.type} - ${transaction.amount}
+                           '📝 ' + transaction.type} - {transaction.amount} HC
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(transaction.created_at).toLocaleDateString()} • {transaction.description}

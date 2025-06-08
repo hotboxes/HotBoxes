@@ -102,7 +102,7 @@ export default function Grid({
 
     const confirmMessage = entryFee === 0 
       ? `Claim this box for free?`
-      : `Purchase this box for ${entryFee} HotCoins?`;
+      : `Purchase this box for ${entryFee} HC?`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -123,7 +123,7 @@ export default function Grid({
         if (profileError) throw profileError;
 
         if ((profile.hotcoin_balance || 0) < entryFee) {
-          alert(`Insufficient HotCoins. You need ${entryFee} HotCoins but only have ${profile.hotcoin_balance || 0}.`);
+          alert(`Insufficient HotCoins. You need ${entryFee} HC but only have ${profile.hotcoin_balance || 0} HC.`);
           return;
         }
       }
@@ -180,7 +180,7 @@ export default function Grid({
 
       const successMessage = entryFee === 0 
         ? `Box claimed successfully!`
-        : `Box purchased successfully for ${entryFee} HotCoins!`;
+        : `Box purchased successfully for ${entryFee} HC!`;
       alert(successMessage);
     } catch (error) {
       console.error('Error purchasing box:', error);

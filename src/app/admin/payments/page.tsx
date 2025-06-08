@@ -194,7 +194,7 @@ export default function AdminPaymentsPage() {
                         <div className="flex items-center space-x-4">
                           <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              ${payment.amount} HotCoins
+                              {payment.amount} HotCoins
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               {payment.profiles?.email} • {payment.profiles?.username || 'No username'}
