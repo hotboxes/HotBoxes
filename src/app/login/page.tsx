@@ -17,21 +17,42 @@ export default function Login() {
     setError(null);
     setLoading(true);
 
+    // Backup timeout to prevent infinite loading
+    const backupTimeout = setTimeout(() => {
+      console.log('Login taking too long, resetting...');
+      setLoading(false);
+      setError('Login is taking longer than expected. Please try again.');
+    }, 10000); // 10 seconds
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting login with:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      console.log('Login response:', { data, error });
 
       if (error) {
         throw error;
       }
 
-      router.push('/games');
-      router.refresh();
+      if (!data.user) {
+        throw new Error('Login successful but no user data returned');
+      }
+
+      console.log('Login successful, redirecting...');
+      clearTimeout(backupTimeout);
+      
+      // Add a small delay to ensure auth state updates, then redirect
+      setTimeout(() => {
+        window.location.href = '/games';
+      }, 100);
     } catch (err: any) {
+      console.error('Login error:', err);
+      clearTimeout(backupTimeout);
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
