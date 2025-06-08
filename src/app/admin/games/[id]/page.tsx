@@ -94,7 +94,10 @@ export default function AdminGamePage() {
   const handlePayoutSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      console.log('Attempting to update payouts for game:', id);
+      console.log('Payout values:', payoutValues);
+      
+      const { data, error } = await supabase
         .from('games')
         .update({
           payout_q1: payoutValues.payout_q1,
@@ -102,9 +105,19 @@ export default function AdminGamePage() {
           payout_q3: payoutValues.payout_q3,
           payout_final: payoutValues.payout_final
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('Update result:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No rows updated - check permissions or game ID');
+      }
 
       // Update local game state
       setGame(prev => ({
@@ -117,9 +130,12 @@ export default function AdminGamePage() {
 
       setEditingPayouts(false);
       alert('Payout amounts updated successfully!');
+      
+      // Refresh game data to ensure everything is in sync
+      await loadAdminGameData();
     } catch (err: any) {
       console.error('Error updating payouts:', err);
-      alert('Failed to update payout amounts. Please try again.');
+      alert(`Failed to update payout amounts: ${err.message}`);
     } finally {
       setSaving(false);
     }
