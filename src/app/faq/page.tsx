@@ -67,9 +67,22 @@ export default function FAQ() {
                 <div className="text-gray-600 dark:text-gray-400 space-y-2">
                   <p>Free games don't require HotCoins to participate - you can claim squares at no cost.</p>
                   <p>You can still win real HotCoin prizes that can be withdrawn as cash.</p>
+                  <p><strong>Box limit:</strong> You can claim up to 2 boxes per free game to ensure fair participation for all users.</p>
                   <p><strong>Admin-funded:</strong> Prize pools are funded by our administrators as promotional offerings.</p>
                 </div>
               </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  How many boxes can I purchase in each game?
+                </h3>
+                <div className="text-gray-600 dark:text-gray-400 space-y-2">
+                  <p><strong>Free games:</strong> Maximum of 2 boxes per user per game</p>
+                  <p><strong>Paid games:</strong> Unlimited boxes (as many as you can afford with your HotCoin balance)</p>
+                  <p>The box limit for free games ensures fair participation and prevents abuse of promotional offerings.</p>
+                </div>
+              </div>
+
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   When are numbers assigned to my squares?
