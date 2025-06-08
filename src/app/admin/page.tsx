@@ -1,268 +1,335 @@
- 'use client';
+'use client';
 
-  import { useState, useEffect } from 'react';
-  import { useRouter } from 'next/navigation';
-  import { supabase } from '@/lib/supabase';
-  import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
-  export default function AdminPage() {
-    const [user, setUser] = useState<any>(null);
-    const [games, setGames] = useState<any[]>([]);
-    const [pendingWithdrawals, setPendingWithdrawals] = useState<any[]>([]);
-    const [pendingPayments, setPendingPayments] = useState<any[]>([]);
-    const [recentUsers, setRecentUsers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const router = useRouter();
+export default function AdminPage() {
+  const [user, setUser] = useState<any>(null);
+  const [games, setGames] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<any[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
+  const router = useRouter();
 
-    useEffect(() => {
-      loadAdminData();
-    }, []);
+  useEffect(() => {
+    loadAdminData();
+    
+    // Set up real-time subscriptions
+    const subscription = supabase
+      .channel('admin-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hotcoin_transactions' }, () => {
+        loadAdminData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        loadAdminData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, () => {
+        loadAdminData();
+      })
+      .subscribe();
 
-    const loadAdminData = async () => {
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-        if (!authUser) {
-          router.push('/login');
-          return;
-        }
+  const loadAdminData = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', authUser.id)
-          .single();
+      if (!authUser) {
+        router.push('/login');
+        return;
+      }
 
-        if (!profile?.is_admin) {
-          router.push('/');
-          return;
-        }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', authUser.id)
+        .single();
 
-        setUser(authUser);
+      if (!profile?.is_admin) {
+        router.push('/');
+        return;
+      }
 
-        // Load games
-        const { data: gamesData } = await supabase
-          .from('games')
-          .select('*')
-          .order('game_date', { ascending: false })
-          .limit(10);
+      setUser(authUser);
 
-        setGames(gamesData || []);
-
-        // Load pending withdrawals
-        const { data: withdrawalsData } = await supabase
-          .from('hotcoin_transactions')
-          .select(`
-            *,
-            profiles:user_id (
-              username,
-              email,
-              hotcoin_balance
-            )
-          `)
-          .eq('type', 'withdrawal')
-          .eq('verification_status', 'pending')
-          .order('created_at', { ascending: false });
-
-        setPendingWithdrawals(withdrawalsData || []);
-
-        // Load pending payments (over $100)
-        const { data: paymentsData } = await supabase
-          .from('hotcoin_transactions')
-          .select(`
-            *,
-            profiles:user_id (
-              username,
-              email
-            )
-          `)
-          .eq('type', 'purchase')
-          .eq('verification_status', 'pending')
-          .order('created_at', { ascending: false });
-
-        setPendingPayments(paymentsData || []);
-
-        // Load recent users (last 7 days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // Load all data concurrently
+      const [
+        gamesResult,
+        usersResult,
+        transactionsResult,
+        withdrawalsResult,
+        paymentsResult,
+        recentUsersResult
+      ] = await Promise.all([
+        // Games
+        supabase.from('games').select('*').order('game_date', { ascending: false }),
         
-        const { data: usersData } = await supabase
-          .from('profiles')
-          .select('*')
-          .gte('created_at', sevenDaysAgo.toISOString())
+        // All users
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        
+        // All transactions
+        supabase.from('hotcoin_transactions').select(`
+          *,
+          profiles:user_id (username, email)
+        `).order('created_at', { ascending: false }).limit(100),
+        
+        // Pending withdrawals
+        supabase.from('hotcoin_transactions').select(`
+          *,
+          profiles:user_id (username, email, hotcoin_balance)
+        `).eq('type', 'withdrawal').eq('verification_status', 'pending').order('created_at', { ascending: false }),
+        
+        // Pending payments
+        supabase.from('hotcoin_transactions').select(`
+          *,
+          profiles:user_id (username, email)
+        `).eq('type', 'purchase').eq('verification_status', 'pending').order('created_at', { ascending: false }),
+        
+        // Recent users (last 7 days)
+        supabase.from('profiles').select('*')
+          .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false })
-          .limit(10);
+      ]);
 
-        setRecentUsers(usersData || []);
+      setGames(gamesResult.data || []);
+      setAllUsers(usersResult.data || []);
+      setAllTransactions(transactionsResult.data || []);
+      setPendingWithdrawals(withdrawalsResult.data || []);
+      setPendingPayments(paymentsResult.data || []);
+      setRecentUsers(recentUsersResult.data || []);
+      
+      // Create recent activity feed
+      const activityFeed = (transactionsResult.data || []).slice(0, 10).map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        amount: tx.amount,
+        user: tx.profiles?.username || tx.profiles?.email || 'Unknown',
+        timestamp: tx.created_at,
+        status: tx.verification_status
+      }));
+      setRecentActivity(activityFeed);
 
-      } catch (err) {
-        console.error('Error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleDeleteGame = async (gameId: string, gameName: string) => {
-      if (!confirm(`Are you sure you want to delete the game "${gameName}"? This action cannot be undone.`)) {
-        return;
-      }
-
-      try {
-        console.log('Starting deletion for game:', gameId);
-
-        // First, check how many boxes exist for this game
-        const { data: existingBoxes, error: checkError } = await supabase
-          .from('boxes')
-          .select('id')
-          .eq('game_id', gameId);
-
-        if (checkError) {
-          console.error('Error checking boxes:', checkError);
-          alert(`Error checking boxes: ${checkError.message}`);
-          return;
-        }
-
-        console.log(`Found ${existingBoxes?.length || 0} boxes to delete`);
-
-        // Delete all boxes for this game
-        const { data: deletedBoxes, error: boxesError } = await supabase
-          .from('boxes')
-          .delete()
-          .eq('game_id', gameId)
-          .select();
-
-        if (boxesError) {
-          console.error('Error deleting boxes:', boxesError);
-          alert(`Failed to delete game boxes: ${boxesError.message}`);
-          return;
-        }
-
-        console.log(`Deleted ${deletedBoxes?.length || 0} boxes`);
-
-        // Then delete the game
-        const { data: deletedGame, error: gameError } = await supabase
-          .from('games')
-          .delete()
-          .eq('id', gameId)
-          .select();
-
-        if (gameError) {
-          console.error('Error deleting game:', gameError);
-          alert(`Failed to delete game: ${gameError.message}`);
-          return;
-        }
-
-        console.log('Deleted game:', deletedGame);
-
-        if (!deletedGame || deletedGame.length === 0) {
-          alert('Game was not found or could not be deleted. It may have already been removed.');
-          return;
-        }
-
-        // Refresh the games list
-        await loadAdminData();
-        alert(`Game "${gameName}" has been deleted successfully.`);
-      } catch (error) {
-        console.error('Error deleting game:', error);
-        alert(`An error occurred while deleting the game: ${error.message || error}`);
-      }
-    };
-
-    const handleApproveWithdrawal = async (transactionId: string, amount: number, cashAppUsername: string) => {
-      try {
-        const { data, error } = await supabase.rpc('complete_withdrawal', {
-          transaction_uuid: transactionId,
-          admin_id: user.id
-        });
-
-        if (error) throw error;
-        
-        alert(`✅ Withdrawal approved! Remember to send $${amount} to ${cashAppUsername} via CashApp.`);
-        loadAdminData(); // Refresh data
-      } catch (error) {
-        console.error('Error approving withdrawal:', error);
-        alert('Failed to approve withdrawal. Please try again.');
-      }
-    };
-
-    const handleRejectWithdrawal = async (transactionId: string, amount: number) => {
-      if (!confirm(`Are you sure you want to reject this $${amount} withdrawal? This will refund the user.`)) {
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.rpc('cancel_withdrawal', {
-          transaction_uuid: transactionId,
-          admin_id: user.id
-        });
-
-        if (error) throw error;
-        
-        alert(`❌ Withdrawal rejected and user refunded $${amount}.`);
-        loadAdminData(); // Refresh data
-      } catch (error) {
-        console.error('Error rejecting withdrawal:', error);
-        alert('Failed to reject withdrawal. Please try again.');
-      }
-    };
-
-    const handleApprovePayment = async (transactionId: string) => {
-      try {
-        const { data, error } = await supabase.rpc('approve_payment', {
-          transaction_uuid: transactionId,
-          admin_id: user.id
-        });
-
-        if (error) throw error;
-        
-        alert('Payment approved successfully!');
-        loadAdminData(); // Refresh data
-      } catch (error) {
-        console.error('Error approving payment:', error);
-        alert('Failed to approve payment. Please try again.');
-      }
-    };
-
-    const handleRejectPayment = async (transactionId: string) => {
-      try {
-        const { data, error } = await supabase.rpc('reject_payment', {
-          transaction_uuid: transactionId,
-          admin_id: user.id
-        });
-
-        if (error) throw error;
-        
-        alert('Payment rejected.');
-        loadAdminData(); // Refresh data
-      } catch (error) {
-        console.error('Error rejecting payment:', error);
-        alert('Failed to reject payment. Please try again.');
-      }
-    };
-
-    if (loading) {
-      return (
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 
-  border-indigo-600"></div>
-        </div>
-      );
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (!user) {
-      return null;
-    }
+  // Financial analytics calculations
+  const getFinancialMetrics = () => {
+    const now = new Date();
+    const timeframes = {
+      '24h': new Date(now.getTime() - 24 * 60 * 60 * 1000),
+      '7d': new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+      '30d': new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    };
+    
+    const cutoffDate = timeframes[selectedTimeframe as keyof typeof timeframes];
+    const filteredTransactions = allTransactions.filter(tx => 
+      new Date(tx.created_at) >= cutoffDate && tx.verification_status === 'approved'
+    );
 
+    const revenue = filteredTransactions
+      .filter(tx => tx.type === 'purchase')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    
+    const payouts = filteredTransactions
+      .filter(tx => tx.type === 'payout')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    
+    const withdrawals = filteredTransactions
+      .filter(tx => tx.type === 'withdrawal')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+
+    const profit = revenue - payouts - withdrawals;
+    const transactionCount = filteredTransactions.length;
+    const avgTransactionSize = transactionCount > 0 ? revenue / filteredTransactions.filter(tx => tx.type === 'purchase').length : 0;
+
+    return { revenue, payouts, withdrawals, profit, transactionCount, avgTransactionSize };
+  };
+
+  // User analytics
+  const getUserAnalytics = () => {
+    const totalUsers = allUsers.length;
+    const activeUsers = allUsers.filter(user => user.hotcoin_balance > 0).length;
+    const newUsersThisWeek = recentUsers.length;
+    const averageBalance = allUsers.reduce((sum, user) => sum + (user.hotcoin_balance || 0), 0) / totalUsers;
+    
+    // Top spenders
+    const topSpenders = allUsers
+      .sort((a, b) => (b.hotcoin_balance || 0) - (a.hotcoin_balance || 0))
+      .slice(0, 5);
+
+    // User segments
+    const highValue = allUsers.filter(user => (user.hotcoin_balance || 0) > 100).length;
+    const mediumValue = allUsers.filter(user => (user.hotcoin_balance || 0) > 25 && (user.hotcoin_balance || 0) <= 100).length;
+    const lowValue = allUsers.filter(user => (user.hotcoin_balance || 0) > 0 && (user.hotcoin_balance || 0) <= 25).length;
+
+    return { totalUsers, activeUsers, newUsersThisWeek, averageBalance, topSpenders, highValue, mediumValue, lowValue };
+  };
+
+  // Game analytics
+  const getGameAnalytics = () => {
     const activeGames = games.filter(g => g.is_active).length;
     const totalGames = games.length;
-    const totalRevenue = games.reduce((sum, game) => {
-      return sum + (game.entry_fee * 100);
-    }, 0);
+    
+    // Calculate boxes sold per game
+    const gamePerformance = games.map(game => {
+      const gameTransactions = allTransactions.filter(tx => 
+        tx.type === 'bet' && tx.game_id === game.id
+      );
+      return {
+        ...game,
+        boxesSold: gameTransactions.length,
+        revenue: gameTransactions.reduce((sum, tx) => sum + game.entry_fee, 0)
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
 
+    // Sport performance
+    const nflGames = games.filter(g => g.sport === 'NFL').length;
+    const nbaGames = games.filter(g => g.sport === 'NBA').length;
+    
+    return { activeGames, totalGames, gamePerformance, nflGames, nbaGames };
+  };
+
+  // Security monitoring
+  const getSecurityMetrics = () => {
+    const suspiciousTransactions = allTransactions.filter(tx => 
+      tx.amount > 500 || (tx.type === 'purchase' && tx.verification_status === 'pending')
+    ).length;
+
+    const failedTransactions = allTransactions.filter(tx => 
+      tx.verification_status === 'rejected'
+    ).length;
+
+    const duplicatePayments = allTransactions.filter((tx, index, arr) => 
+      tx.transaction_id && arr.findIndex(t => t.transaction_id === tx.transaction_id) !== index
+    ).length;
+
+    return { suspiciousTransactions, failedTransactions, duplicatePayments };
+  };
+
+  const handleDeleteGame = async (gameId: string, gameName: string) => {
+    if (!confirm(`Are you sure you want to delete the game "${gameName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Delete boxes first, then game
+      await supabase.from('boxes').delete().eq('game_id', gameId);
+      const { error } = await supabase.from('games').delete().eq('id', gameId);
+
+      if (error) throw error;
+      
+      alert(`Game "${gameName}" has been deleted successfully.`);
+      loadAdminData();
+    } catch (error) {
+      console.error('Error deleting game:', error);
+      alert(`An error occurred while deleting the game: ${error.message}`);
+    }
+  };
+
+  const handleApproveWithdrawal = async (transactionId: string, amount: number, cashAppUsername: string) => {
+    try {
+      const { data, error } = await supabase.rpc('complete_withdrawal', {
+        transaction_uuid: transactionId,
+        admin_id: user.id
+      });
+
+      if (error) throw error;
+      
+      alert(`✅ Withdrawal approved! Remember to send $${amount} to ${cashAppUsername} via CashApp.`);
+      loadAdminData();
+    } catch (error) {
+      console.error('Error approving withdrawal:', error);
+      alert('Failed to approve withdrawal. Please try again.');
+    }
+  };
+
+  const handleRejectWithdrawal = async (transactionId: string, amount: number) => {
+    if (!confirm(`Are you sure you want to reject this $${amount} withdrawal? This will refund the user.`)) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('cancel_withdrawal', {
+        transaction_uuid: transactionId,
+        admin_id: user.id
+      });
+
+      if (error) throw error;
+      
+      alert(`❌ Withdrawal rejected and user refunded $${amount}.`);
+      loadAdminData();
+    } catch (error) {
+      console.error('Error rejecting withdrawal:', error);
+      alert('Failed to reject withdrawal. Please try again.');
+    }
+  };
+
+  const handleApprovePayment = async (transactionId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('approve_payment', {
+        transaction_uuid: transactionId,
+        admin_id: user.id
+      });
+
+      if (error) throw error;
+      
+      alert('Payment approved successfully!');
+      loadAdminData();
+    } catch (error) {
+      console.error('Error approving payment:', error);
+      alert('Failed to approve payment. Please try again.');
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const financialMetrics = getFinancialMetrics();
+  const userAnalytics = getUserAnalytics();
+  const gameAnalytics = getGameAnalytics();
+  const securityMetrics = getSecurityMetrics();
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 space-y-4 lg:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ultimate Admin Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400">Real-time platform control center</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedTimeframe}
+            onChange={(e) => setSelectedTimeframe(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
           <Link
             href="/admin/games/create"
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
@@ -270,390 +337,409 @@
             Add New Game
           </Link>
         </div>
+      </div>
 
-        {/* Pending Actions - High Priority */}
-        {(pendingWithdrawals.length > 0 || pendingPayments.length > 0) && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-4">
-              ⚠️ Pending Actions ({pendingWithdrawals.length + pendingPayments.length})
-            </h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Pending Withdrawals */}
-              {pendingWithdrawals.length > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-4">
-                    💸 Pending Withdrawals ({pendingWithdrawals.length})
-                  </h3>
-                  <div className="space-y-4">
-                    {pendingWithdrawals.slice(0, 3).map((withdrawal) => (
-                      <div key={withdrawal.id} className="bg-white dark:bg-gray-800 p-4 rounded-md border">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">
-                              ${withdrawal.amount} → {withdrawal.cashapp_username}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {withdrawal.profiles?.email} ({withdrawal.profiles?.username || 'No username'})
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(withdrawal.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleApproveWithdrawal(withdrawal.id, withdrawal.amount, withdrawal.cashapp_username)}
-                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectWithdrawal(withdrawal.id, withdrawal.amount)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {pendingWithdrawals.length > 3 && (
-                      <Link href="/admin/payments" className="text-red-600 dark:text-red-400 text-sm hover:underline">
-                        View all {pendingWithdrawals.length} pending withdrawals →
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Pending Payments */}
-              {pendingPayments.length > 0 && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">
-                    💰 Pending Payments ({pendingPayments.length})
-                  </h3>
-                  <div className="space-y-4">
-                    {pendingPayments.slice(0, 3).map((payment) => (
-                      <div key={payment.id} className="bg-white dark:bg-gray-800 p-4 rounded-md border">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">
-                              ${payment.amount} from {payment.profiles?.email}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Transaction ID: {payment.transaction_id}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(payment.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleApprovePayment(payment.id)}
-                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectPayment(payment.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {pendingPayments.length > 3 && (
-                      <Link href="/admin/payments" className="text-yellow-600 dark:text-yellow-400 text-sm hover:underline">
-                        View all {pendingPayments.length} pending payments →
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
+      {/* Critical Alerts */}
+      {(pendingWithdrawals.length > 0 || pendingPayments.length > 0 || securityMetrics.suspiciousTransactions > 0) && (
+        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 rounded-md">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">🚨</span>
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">Critical Actions Required</h3>
+              <p className="text-red-700 dark:text-red-300">
+                {pendingWithdrawals.length} pending withdrawals • {pendingPayments.length} pending payments • {securityMetrics.suspiciousTransactions} security alerts
+              </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center 
-  justify-center">
-                    <span className="text-white text-sm font-bold">🎮</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400
-   truncate">
-                      Active Games
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {activeGames}
-                    </dd>
-                  </dl>
-                </div>
+      {/* Financial Analytics Dashboard */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">💰 Financial Analytics ({selectedTimeframe})</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">Revenue</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">${financialMetrics.revenue}</p>
+              </div>
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">📈</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center 
-  justify-center">
-                    <span className="text-white text-sm font-bold">💰</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400
-   truncate">
-                      Potential Revenue
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {totalRevenue} HC
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Net Profit</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">${financialMetrics.profit}</p>
+              </div>
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">💎</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center 
-  justify-center">
-                    <span className="text-white text-sm font-bold">📊</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400
-   truncate">
-                      Total Games
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {totalGames}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Withdrawals</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">${financialMetrics.withdrawals}</p>
+              </div>
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">💸</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg Transaction</p>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">${Math.round(financialMetrics.avgTransactionSize)}</p>
+              </div>
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">🎯</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md 
-  mb-8">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 
-  dark:text-white">
-              Quick Actions
-            </h3>
+      {/* User Analytics */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">👥 User Intelligence</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">User Segments</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">High Value (&gt;$100)</span>
+                <span className="text-lg font-bold text-green-600">{userAnalytics.highValue}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Medium Value ($25-$100)</span>
+                <span className="text-lg font-bold text-blue-600">{userAnalytics.mediumValue}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Low Value ($1-$25)</span>
+                <span className="text-lg font-bold text-orange-600">{userAnalytics.lowValue}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">New This Week</span>
+                <span className="text-lg font-bold text-purple-600">{userAnalytics.newUsersThisWeek}</span>
+              </div>
+            </div>
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-              <Link
-                href="/admin/games/create"
-                className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 
-  dark:hover:bg-indigo-900/50 p-4 rounded-lg text-center transition-colors"
-              >
-                <div className="text-2xl mb-2">🏈</div>
-                <div className="text-sm font-medium text-indigo-700 
-  dark:text-indigo-300">
-                  Add NFL Game
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Top Spenders</h3>
+            <div className="space-y-3">
+              {userAnalytics.topSpenders.map((user, index) => (
+                <div key={user.id} className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                    <span className="text-sm text-gray-900 dark:text-white">{user.username || user.email}</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-600">${user.hotcoin_balance || 0}</span>
                 </div>
-              </Link>
-              <Link
-                href="/admin/games/create?sport=NBA"
-                className="bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 
-  dark:hover:bg-orange-900/50 p-4 rounded-lg text-center transition-colors"
-              >
-                <div className="text-2xl mb-2">🏀</div>
-                <div className="text-sm font-medium text-orange-700 
-  dark:text-orange-300">
-                  Add NBA Game
-                </div>
-              </Link>
-              <Link
-                href="/admin/payments"
-                className="bg-green-50 dark:bg-green-900/30 hover:bg-green-100 
-  dark:hover:bg-green-900/50 p-4 rounded-lg text-center transition-colors"
-              >
-                <div className="text-2xl mb-2">💰</div>
-                <div className="text-sm font-medium text-green-700 
-  dark:text-green-300">
-                  Verify Payments
-                </div>
-              </Link>
-              <Link
-                href="/admin/payments"
-                className="bg-green-50 dark:bg-green-900/30 hover:bg-green-100 
-  dark:hover:bg-green-900/50 p-4 rounded-lg text-center transition-colors"
-              >
-                <div className="text-2xl mb-2">💰</div>
-                <div className="text-sm font-medium text-green-700 
-  dark:text-green-300">
-                  All Payments
-                </div>
-              </Link>
-              <Link
-                href="/admin/users"
-                className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 
-  dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors"
-              >
-                <div className="text-2xl mb-2">👥</div>
-                <div className="text-sm font-medium text-purple-700 
-  dark:text-purple-300">
-                  Manage Users
-                </div>
-              </Link>
+              ))}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Recent Users */}
-        {recentUsers.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mb-8">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                👥 Recent Users ({recentUsers.length} new this week)
-              </h3>
-            </div>
-            <div className="border-t border-gray-200 dark:border-gray-700">
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {recentUsers.slice(0, 5).map((user) => (
-                  <li key={user.id}>
-                    <div className="px-4 py-4 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
-                            {user.username ? user.username[0].toUpperCase() : user.email[0].toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {user.username || 'No username'}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {user.email} • ${user.hotcoin_balance || 0} HC
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            Joined {new Date(user.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {user.is_admin && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                            Admin
-                          </span>
-                        )}
-                        <Link
-                          href={`/admin/users/${user.id}`}
-                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 text-sm font-medium"
-                        >
-                          View Profile
-                        </Link>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {recentUsers.length > 5 && (
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                  <Link href="/admin/users" className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline">
-                    View all {recentUsers.length} recent users →
-                  </Link>
-                </div>
-              )}
+      {/* Game Performance Analytics */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">🎮 Game Performance</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Active Games</p>
+            <p className="text-xl font-bold text-green-600">{gameAnalytics.activeGames}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Games</p>
+            <p className="text-xl font-bold text-blue-600">{gameAnalytics.totalGames}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">NFL Games</p>
+            <p className="text-xl font-bold text-orange-600">{gameAnalytics.nflGames}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">NBA Games</p>
+            <p className="text-xl font-bold text-purple-600">{gameAnalytics.nbaGames}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Top Game Revenue</p>
+            <p className="text-xl font-bold text-green-600">${gameAnalytics.gamePerformance[0]?.revenue || 0}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Security & Fraud Monitoring */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">🔒 Security Monitoring</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Suspicious Transactions</p>
+                <p className="text-xl font-bold text-yellow-900 dark:text-yellow-100">{securityMetrics.suspiciousTransactions}</p>
+              </div>
+              <span className="text-2xl">⚠️</span>
             </div>
           </div>
-        )}
-
-        {/* Recent Games */}
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden 
-  sm:rounded-md">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 
-  dark:text-white">
-              Recent Games
-            </h3>
+          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">Failed Transactions</p>
+                <p className="text-xl font-bold text-red-900 dark:text-red-100">{securityMetrics.failedTransactions}</p>
+              </div>
+              <span className="text-2xl">❌</span>
+            </div>
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700">
-            {games && games.length > 0 ? (
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {games.map((game) => (
-                  <li key={game.id}>
-                    <div className="px-4 py-4 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="inline-flex items-center px-2.5 py-0.5 
-  rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 
-  dark:text-blue-200">
-                            {game.sport}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 
-  dark:text-white">
-                            {game.name}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {game.home_team} vs {game.away_team} • {game.entry_fee} HC
-  per box
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {game.is_active ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 
-  rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 
-  dark:text-green-200">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 
-  rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 
-  dark:text-gray-200">
-                            Closed
-                          </span>
-                        )}
-                        <Link
-                          href={`/admin/games/${game.id}`}
-                          className="text-indigo-600 dark:text-indigo-400 
-  hover:text-indigo-500 text-sm font-medium"
-                        >
-                          Manage
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteGame(game.id, game.name)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-500 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">System Health</p>
+                <p className="text-xl font-bold text-blue-900 dark:text-blue-100">Healthy</p>
+              </div>
+              <span className="text-2xl">✅</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Real-Time Activity Feed */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">⚡ Live Activity Feed</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="max-h-64 overflow-y-auto">
+            {recentActivity.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="p-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        activity.type === 'purchase' ? 'bg-green-500' :
+                        activity.type === 'withdrawal' ? 'bg-red-500' :
+                        activity.type === 'payout' ? 'bg-blue-500' :
+                        'bg-gray-500'
+                      }`}></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {activity.type === 'purchase' ? '💰' : 
+                           activity.type === 'withdrawal' ? '💸' :
+                           activity.type === 'payout' ? '🎉' : '📝'} 
+                          {activity.user} - ${activity.amount} ({activity.type})
+                        </p>
+                        <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
                       </div>
                     </div>
-                  </li>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      activity.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {activity.status}
+                    </span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <div className="px-4 py-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No games yet. Create
-  your first game!</p>
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                No recent activity
               </div>
             )}
           </div>
         </div>
       </div>
-    );
-  }
+
+      {/* Pending Actions */}
+      {(pendingWithdrawals.length > 0 || pendingPayments.length > 0) && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-4">
+            ⚠️ Pending Actions ({pendingWithdrawals.length + pendingPayments.length})
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pending Withdrawals */}
+            {pendingWithdrawals.length > 0 && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-4">
+                  💸 Pending Withdrawals ({pendingWithdrawals.length})
+                </h3>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {pendingWithdrawals.map((withdrawal) => (
+                    <div key={withdrawal.id} className="bg-white dark:bg-gray-800 p-4 rounded-md border">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            ${withdrawal.amount} → {withdrawal.cashapp_username}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {withdrawal.profiles?.email} ({withdrawal.profiles?.username || 'No username'})
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(withdrawal.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApproveWithdrawal(withdrawal.id, withdrawal.amount, withdrawal.cashapp_username)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectWithdrawal(withdrawal.id, withdrawal.amount)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pending Payments */}
+            {pendingPayments.length > 0 && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">
+                  💰 Pending Payments ({pendingPayments.length})
+                </h3>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {pendingPayments.map((payment) => (
+                    <div key={payment.id} className="bg-white dark:bg-gray-800 p-4 rounded-md border">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            ${payment.amount} from {payment.profiles?.email}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Transaction ID: {payment.transaction_id}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(payment.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApprovePayment(payment.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mb-8">
+        <div className="px-4 py-5 sm:px-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            🚀 Quick Actions
+          </h3>
+        </div>
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-4">
+            <Link href="/admin/games/create" className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">🏈</div>
+              <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Add NFL Game</div>
+            </Link>
+            <Link href="/admin/games/create?sport=NBA" className="bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">🏀</div>
+              <div className="text-sm font-medium text-orange-700 dark:text-orange-300">Add NBA Game</div>
+            </Link>
+            <Link href="/admin/payments" className="bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">💰</div>
+              <div className="text-sm font-medium text-green-700 dark:text-green-300">Payments</div>
+            </Link>
+            <Link href="/admin/users" className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">👥</div>
+              <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Users</div>
+            </Link>
+            <Link href="/admin/cron-test" className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">⚙️</div>
+              <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Cron Test</div>
+            </Link>
+            <Link href="/games" className="bg-gray-50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">🌐</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Live Site</div>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Games */}
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+        <div className="px-4 py-5 sm:px-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            🎮 Recent Games
+          </h3>
+        </div>
+        <div className="border-t border-gray-200 dark:border-gray-700 max-h-64 overflow-y-auto">
+          {games && games.length > 0 ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {games.slice(0, 10).map((game) => (
+                <li key={game.id}>
+                  <div className="px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                        {game.sport}
+                      </span>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {game.name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {game.home_team} vs {game.away_team} • {game.entry_fee === 0 ? 'Free' : `${game.entry_fee} HC`} per box
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {game.is_active ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+                          Closed
+                        </span>
+                      )}
+                      <Link href={`/admin/games/${game.id}`} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 text-sm font-medium">
+                        Manage
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteGame(game.id, game.name)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-500 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">No games yet. Create your first game!</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
