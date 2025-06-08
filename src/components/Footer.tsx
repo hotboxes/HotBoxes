@@ -24,6 +24,12 @@ export default function Footer() {
               <Link href="/terms" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
                 Terms
               </Link>
+              <Link href="/privacy" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+                Privacy
+              </Link>
+              <Link href="/help" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+                Help
+              </Link>
             </div>
           </div>
 

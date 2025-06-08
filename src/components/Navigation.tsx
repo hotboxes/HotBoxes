@@ -125,6 +125,16 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   >
                     HotCoins
                   </Link>
+                  <Link
+                    href="/settings"
+                    className={`${
+                      pathname === '/settings'
+                        ? 'border-indigo-500 text-gray-900 dark:text-white'
+                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                  >
+                    Settings
+                  </Link>
                   {profile?.is_admin && (
                     <Link
                       href="/admin"
@@ -259,6 +269,16 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                 >
                   HotCoins
+                </Link>
+                <Link
+                  href="/settings"
+                  className={`${
+                    pathname === '/settings'
+                      ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
+                      : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                >
+                  Settings
                 </Link>
                 {profile?.is_admin && (
                   <Link

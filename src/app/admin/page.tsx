@@ -996,7 +996,7 @@ export default function AdminPage() {
           </h3>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-4 p-4">
             <Link href="/admin/games/create" className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">🏈</div>
               <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Add NFL Game</div>
@@ -1017,8 +1017,20 @@ export default function AdminPage() {
               <div className="text-2xl mb-2">📊</div>
               <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Analytics</div>
             </Link>
-            <Link href="/admin/cron-test" className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
+            <Link href="/admin/config" className="bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">⚙️</div>
+              <div className="text-sm font-medium text-red-700 dark:text-red-300">System Config</div>
+            </Link>
+            <Link href="/admin/terms" className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">📋</div>
+              <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Terms Management</div>
+            </Link>
+            <Link href="/admin/support" className="bg-pink-50 dark:bg-pink-900/30 hover:bg-pink-100 dark:hover:bg-pink-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">📧</div>
+              <div className="text-sm font-medium text-pink-700 dark:text-pink-300">Support Tickets</div>
+            </Link>
+            <Link href="/admin/cron-test" className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">🔧</div>
               <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Cron Test</div>
             </Link>
             <Link href="/games" className="bg-gray-50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-900/50 p-4 rounded-lg text-center transition-colors">
