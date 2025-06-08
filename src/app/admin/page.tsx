@@ -258,6 +258,28 @@
                   Add NBA Game
                 </div>
               </Link>
+              <Link
+                href="/admin/payments"
+                className="bg-green-50 dark:bg-green-900/30 hover:bg-green-100 
+  dark:hover:bg-green-900/50 p-4 rounded-lg text-center transition-colors"
+              >
+                <div className="text-2xl mb-2">💰</div>
+                <div className="text-sm font-medium text-green-700 
+  dark:text-green-300">
+                  Verify Payments
+                </div>
+              </Link>
+              <Link
+                href="/admin/cron-test"
+                className="bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 
+  dark:hover:bg-purple-900/50 p-4 rounded-lg text-center transition-colors"
+              >
+                <div className="text-2xl mb-2">🔧</div>
+                <div className="text-sm font-medium text-purple-700 
+  dark:text-purple-300">
+                  Cron Test
+                </div>
+              </Link>
             </div>
           </div>
         </div>

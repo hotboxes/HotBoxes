@@ -39,6 +39,10 @@ export interface HotCoinTransaction {
   description: string
   gameId?: string
   createdAt: string
+  paymentMethod?: 'cashapp' | 'venmo' | 'paypal'
+  transactionId?: string
+  verificationStatus?: 'pending' | 'approved' | 'rejected'
+  autoApproved?: boolean
 }
 
 export interface Purchase {

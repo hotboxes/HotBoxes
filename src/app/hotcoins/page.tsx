@@ -50,42 +50,96 @@ export default function HotCoinsPage() {
       return;
     }
 
+    // Generate unique payment reference
+    const paymentRef = `HC-${user?.id?.slice(-8)}-${Date.now()}`;
+    
+    // Open CashApp with pre-filled payment
+    const cashAppUrl = `https://cash.app/$playhotboxes/${purchaseAmount}/${paymentRef}`;
+    window.open(cashAppUrl, '_blank');
+    
+    // Show transaction ID input modal
+    const transactionId = prompt(
+      `After completing your CashApp payment of $${purchaseAmount} to $playhotboxes, please enter your transaction ID (starts with "CR" or similar):`
+    );
+    
+    if (!transactionId) {
+      return; // User cancelled
+    }
+    
     setPurchasing(true);
     try {
-      // In a real app, you'd integrate with Stripe here
-      // For now, we'll simulate a successful purchase
+      // Check if transaction ID already used
+      const { data: existingTransaction } = await supabase
+        .from('hotcoin_transactions')
+        .select('id')
+        .eq('transaction_id', transactionId)
+        .single();
+        
+      if (existingTransaction) {
+        alert('This transaction ID has already been used.');
+        setPurchasing(false);
+        return;
+      }
       
-      // Update user's HotCoin balance
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          hotcoin_balance: (user?.hotcoinBalance || 0) + purchaseAmount 
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      // Record the transaction
-      await supabase
+      // Determine if auto-approval applies
+      const autoApproved = purchaseAmount <= 100;
+      const verificationStatus = autoApproved ? 'approved' : 'pending';
+      
+      // Create transaction record
+      const { error: transactionError } = await supabase
         .from('hotcoin_transactions')
         .insert([{
           user_id: user?.id,
           type: 'purchase',
           amount: purchaseAmount,
-          description: `Purchased ${purchaseAmount} HotCoins`,
+          description: `CashApp purchase of ${purchaseAmount} HotCoins`,
+          payment_method: 'cashapp',
+          transaction_id: transactionId,
+          verification_status: verificationStatus,
+          auto_approved: autoApproved
         }]);
+        
+      if (transactionError) throw transactionError;
+      
+      if (autoApproved) {
+        // Auto-approve: Update user's HotCoin balance immediately
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            hotcoin_balance: (user?.hotcoinBalance || 0) + purchaseAmount 
+          })
+          .eq('id', user?.id);
 
-      // Update local state
-      setUser(prev => prev ? {
-        ...prev,
-        hotcoinBalance: (prev.hotcoinBalance || 0) + purchaseAmount
-      } : null);
+        if (error) throw error;
 
-      alert(`Successfully purchased ${purchaseAmount} HotCoins!`);
+        // Update local state
+        setUser(prev => prev ? {
+          ...prev,
+          hotcoinBalance: (prev.hotcoinBalance || 0) + purchaseAmount
+        } : null);
+
+        alert(`🎉 Payment verified! ${purchaseAmount} HotCoins added to your account.`);
+      } else {
+        // Manual verification required
+        alert(`💰 Payment submitted! Your purchase of ${purchaseAmount} HotCoins is pending verification. You'll receive your HotCoins within 24 hours.`);
+        
+        // Send email notification to admin
+        await fetch('/api/admin/notify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: purchaseAmount,
+            transactionId,
+            userEmail: user?.email,
+            userId: user?.id
+          })
+        });
+      }
+      
       setPurchaseAmount(10);
     } catch (error) {
-      console.error('Error purchasing HotCoins:', error);
-      alert('Purchase failed. Please try again.');
+      console.error('Error processing payment:', error);
+      alert('Payment processing failed. Please contact support if you completed the payment.');
     } finally {
       setPurchasing(false);
     }
@@ -157,14 +211,30 @@ export default function HotCoinsPage() {
                 <span>Exchange rate:</span>
                 <span>1 USD = 1 HotCoin</span>
               </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span>Processing time:</span>
+                <span className={purchaseAmount <= 100 ? "text-green-600 font-semibold" : "text-orange-600"}>
+                  {purchaseAmount <= 100 ? "Instant" : "Up to 24 hours"}
+                </span>
+              </div>
             </div>
 
             <button
               onClick={handlePurchase}
               disabled={purchasing || purchaseAmount < 10}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-md transition-colors flex items-center justify-center space-x-2"
             >
-              {purchasing ? 'Processing...' : `Purchase ${purchaseAmount} HotCoins`}
+              {purchasing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>💰</span>
+                  <span>Pay ${purchaseAmount} via CashApp</span>
+                </>
+              )}
             </button>
           </div>
         </div>
