@@ -12,6 +12,8 @@ export default function SignUp() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +22,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
+      console.log('Starting signup process for email:', email);
+      
       // Sign up the user
       const { error: signUpError, data } = await supabase.auth.signUp({
         email,
@@ -31,12 +35,25 @@ export default function SignUp() {
         },
       });
 
+      console.log('Signup response:', { 
+        error: signUpError, 
+        data: data,
+        user: data?.user,
+        session: data?.session,
+        emailConfirmedAt: data?.user?.email_confirmed_at,
+        userCreated: !!data?.user
+      });
+
       if (signUpError) {
+        console.error('Signup error details:', signUpError);
         throw signUpError;
       }
 
-      // Create user profile in Supabase
-      if (data?.user) {
+      // Check if user was created but needs confirmation
+      if (data?.user && !data.user.email_confirmed_at) {
+        console.log('User created, needs email confirmation');
+        
+        // Create user profile in Supabase
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -50,14 +67,44 @@ export default function SignUp() {
         if (profileError) {
           console.error('Error creating profile:', profileError);
         }
-      }
 
-      // Show confirmation message instead of redirecting
-      setShowConfirmation(true);
+        // Show confirmation message
+        setShowConfirmation(true);
+      } else if (data?.user && data.user.email_confirmed_at) {
+        // User was auto-confirmed (shouldn't happen with email confirmation enabled)
+        console.log('User auto-confirmed');
+        setShowConfirmation(true);
+      } else {
+        throw new Error('Unexpected signup response - no user data received');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setResendingEmail(true);
+    setResendMessage('');
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) {
+        console.error('Resend error:', error);
+        setResendMessage('Failed to resend email. Please try again or contact support.');
+      } else {
+        setResendMessage('Confirmation email resent! Check your inbox and spam folder.');
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      setResendMessage('Failed to resend email. Please try again or contact support.');
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -96,16 +143,44 @@ export default function SignUp() {
               </div>
               
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                <p>Didn't receive the email? Check your spam folder or contact support.</p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2">Email Not Received?</h4>
+                  <ul className="text-amber-700 dark:text-amber-300 space-y-1 text-xs">
+                    <li>• Check your spam/junk folder</li>
+                    <li>• Look for emails from "noreply@ljyeewnjtkcvbrjjpzyw.supabase.co"</li>
+                    <li>• Wait up to 5-10 minutes for delivery</li>
+                    <li>• Contact support at help@playhotboxes.com if still missing</li>
+                  </ul>
+                </div>
               </div>
               
+              {/* Resend message */}
+              {resendMessage && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  resendMessage.includes('Failed') 
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' 
+                    : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                }`}>
+                  {resendMessage}
+                </div>
+              )}
+              
               <div className="space-y-3">
+                <button
+                  onClick={handleResendEmail}
+                  disabled={resendingEmail}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-2 px-4 rounded-md"
+                >
+                  {resendingEmail ? 'Resending...' : 'Resend Confirmation Email'}
+                </button>
+                
                 <button
                   onClick={() => {
                     setShowConfirmation(false);
                     setEmail('');
                     setPassword('');
                     setUsername('');
+                    setResendMessage('');
                   }}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md"
                 >

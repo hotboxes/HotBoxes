@@ -817,7 +817,7 @@ The HotBoxes platform now operates a complete real-money economy:
 
 ---
 
-## **📧 SIGNUP UX IMPROVEMENTS (Current Session)**
+## **📧 SIGNUP UX IMPROVEMENTS & EMAIL TROUBLESHOOTING (Current Session)**
 
 ### **✅ Enhanced Signup Flow**
 **File Modified:** `/src/app/signup/page.tsx`
@@ -834,6 +834,22 @@ The HotBoxes platform now operates a complete real-money economy:
 - **Email Address Highlight** - Blue background box showing their email
 - **Multiple Action Options** - Sign up another account or back to login
 - **Mobile Responsive** - Perfect experience on all device sizes
+
+### **🔧 Email Delivery Troubleshooting (Latest)**
+**Enhanced Email Debugging Features:**
+- **Detailed Console Logging** - Added comprehensive signup process logging for debugging
+- **Email Delivery Troubleshooting Section** - Professional amber alert box with specific guidance
+- **Supabase Email Domain Info** - Shows users the exact sender domain to look for in spam
+- **Resend Email Functionality** - Added button to resend confirmation emails using Supabase resend API
+- **Real-Time Status Messages** - Success/error feedback for resend attempts
+- **Enhanced Error Handling** - Better error detection and user guidance
+
+### **📧 Email Troubleshooting Features**
+- **Spam Folder Guidance** - Specific instructions to check for "noreply@ljyeewnjtkcvbrjjpzyw.supabase.co"
+- **Timing Expectations** - Clear 5-10 minute delivery window guidance
+- **Support Contact** - Direct help@playhotboxes.com contact for email issues
+- **Resend Capability** - One-click resend with loading states and feedback
+- **Professional Error Messaging** - Clear distinction between success and failure states
 
 ---
 
