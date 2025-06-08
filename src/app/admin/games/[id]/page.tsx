@@ -470,6 +470,21 @@ export default function AdminGamePage() {
                   </div>
                   <div className="flex space-x-2">
                     <button
+                      onClick={async () => {
+                        console.log('=== TESTING ADMIN PERMISSIONS ===');
+                        const { data: { user } } = await supabase.auth.getUser();
+                        console.log('User:', user?.id);
+                        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+                        console.log('Profile:', profile);
+                        const { data: games } = await supabase.from('games').select('*').eq('id', id);
+                        console.log('Can read game:', games);
+                        alert(`Admin: ${profile?.is_admin}, Game found: ${!!games?.length}`);
+                      }}
+                      className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
+                    >
+                      Debug
+                    </button>
+                    <button
                       onClick={handlePayoutCancel}
                       className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
