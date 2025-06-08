@@ -81,9 +81,16 @@ export default function HotCoinsPage() {
       return;
     }
     
+    console.log('Starting payment verification...', {
+      purchaseAmount,
+      transactionId: transactionId.trim(),
+      userId: user?.id
+    });
+    
     setPurchasing(true);
     try {
       // Check if transaction ID already used
+      console.log('Checking for duplicate transaction ID...');
       const { data: existingTransaction } = await supabase
         .from('hotcoin_transactions')
         .select('id')
@@ -91,14 +98,19 @@ export default function HotCoinsPage() {
         .single();
         
       if (existingTransaction) {
+        console.log('Duplicate transaction ID found');
         alert('This transaction ID has already been used.');
         setPurchasing(false);
         return;
       }
       
+      console.log('Transaction ID is unique, proceeding...');
+      
       // Determine if auto-approval applies
       const autoApproved = purchaseAmount <= 100;
       const verificationStatus = autoApproved ? 'approved' : 'pending';
+      
+      console.log('Creating transaction record...', { autoApproved, verificationStatus });
       
       // Create transaction record
       const { error: transactionError } = await supabase
@@ -114,9 +126,15 @@ export default function HotCoinsPage() {
           auto_approved: autoApproved
         }]);
         
-      if (transactionError) throw transactionError;
+      if (transactionError) {
+        console.error('Transaction creation error:', transactionError);
+        throw transactionError;
+      }
+      
+      console.log('Transaction record created successfully');
       
       if (autoApproved) {
+        console.log('Auto-approving payment and updating balance...');
         // Auto-approve: Update user's HotCoin balance immediately
         const { error } = await supabase
           .from('profiles')
@@ -125,7 +143,12 @@ export default function HotCoinsPage() {
           })
           .eq('id', user?.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Balance update error:', error);
+          throw error;
+        }
+
+        console.log('Balance updated successfully');
 
         // Update local state
         setUser(prev => prev ? {
@@ -133,23 +156,36 @@ export default function HotCoinsPage() {
           hotcoinBalance: (prev.hotcoinBalance || 0) + purchaseAmount
         } : null);
 
+        console.log('Payment process completed successfully');
         alert(`🎉 Payment verified! ${purchaseAmount} HotCoins added to your account.`);
       } else {
         // Manual verification required
         alert(`💰 Payment submitted! Your purchase of ${purchaseAmount} HotCoins is pending verification. You'll receive your HotCoins within 24 hours.`);
         
-        // Send email notification to admin
-        await fetch('/api/admin/notify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: purchaseAmount,
-            transactionId: transactionId.trim(),
-            userEmail: user?.email,
-            userId: user?.id,
-            paymentRef
-          })
-        });
+        // Send email notification to admin (non-blocking)
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          await fetch('/api/admin/notify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: purchaseAmount,
+              transactionId: transactionId.trim(),
+              userEmail: user?.email,
+              userId: user?.id,
+              paymentRef
+            }),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          console.log('Admin notification sent successfully');
+        } catch (notificationError) {
+          console.error('Failed to send admin notification (non-critical):', notificationError);
+          // Don't fail the whole payment process if notification fails
+        }
       }
       
       // Reset form
