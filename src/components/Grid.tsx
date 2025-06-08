@@ -91,7 +91,20 @@ export default function Grid({
   const handleBoxClick = async (box: Box) => {
     if (readOnly || !userId || box.userId || isSelecting) return;
 
-    if (!confirm(`Purchase this box for ${entryFee} HotCoins?`)) {
+    // For free games, check if user already has 2 boxes
+    if (entryFee === 0) {
+      const userBoxCount = boxes.filter(b => b.userId === userId).length;
+      if (userBoxCount >= 2) {
+        alert('You can only claim 2 boxes per free game. You have already reached the limit.');
+        return;
+      }
+    }
+
+    const confirmMessage = entryFee === 0 
+      ? `Claim this box for free?`
+      : `Purchase this box for ${entryFee} HotCoins?`;
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -99,29 +112,41 @@ export default function Grid({
     setIsSelecting(true);
 
     try {
-      // Check user's HotCoin balance
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('hotcoin_balance')
-        .eq('id', userId)
-        .single();
+      // Check user's HotCoin balance (only for paid games)
+      if (entryFee > 0) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('hotcoin_balance')
+          .eq('id', userId)
+          .single();
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
 
-      if ((profile.hotcoin_balance || 0) < entryFee) {
-        alert(`Insufficient HotCoins. You need ${entryFee} HotCoins but only have ${profile.hotcoin_balance || 0}.`);
-        return;
+        if ((profile.hotcoin_balance || 0) < entryFee) {
+          alert(`Insufficient HotCoins. You need ${entryFee} HotCoins but only have ${profile.hotcoin_balance || 0}.`);
+          return;
+        }
       }
 
-      // Deduct HotCoins and update box
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          hotcoin_balance: (profile.hotcoin_balance || 0) - entryFee 
-        })
-        .eq('id', userId);
+      // Deduct HotCoins (only for paid games)
+      if (entryFee > 0) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('hotcoin_balance')
+          .eq('id', userId)
+          .single();
 
-      if (updateError) throw updateError;
+        if (profileError) throw profileError;
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            hotcoin_balance: (profile.hotcoin_balance || 0) - entryFee 
+          })
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+      }
 
       // Update the box in the database
       const { error: boxError } = await supabase
@@ -131,18 +156,20 @@ export default function Grid({
 
       if (boxError) throw boxError;
 
-      // Record the transaction
-      const { error: transactionError } = await supabase
-        .from('hotcoin_transactions')
-        .insert([{
-          user_id: userId,
-          type: 'bet',
-          amount: -entryFee,
-          description: `Purchased box for game: ${gameId}`,
-          game_id: gameId,
-        }]);
+      // Record the transaction (only for paid games)
+      if (entryFee > 0) {
+        const { error: transactionError } = await supabase
+          .from('hotcoin_transactions')
+          .insert([{
+            user_id: userId,
+            type: 'bet',
+            amount: -entryFee,
+            description: `Purchased box for game: ${gameId}`,
+            game_id: gameId,
+          }]);
 
-      if (transactionError) throw transactionError;
+        if (transactionError) throw transactionError;
+      }
 
       // Update local state
       setBoxes((currentBoxes) =>
@@ -151,7 +178,10 @@ export default function Grid({
         )
       );
 
-      alert(`Box purchased successfully for ${entryFee} HotCoins!`);
+      const successMessage = entryFee === 0 
+        ? `Box claimed successfully!`
+        : `Box purchased successfully for ${entryFee} HotCoins!`;
+      alert(successMessage);
     } catch (error) {
       console.error('Error purchasing box:', error);
       alert('Failed to purchase box. Please try again.');
@@ -185,8 +215,36 @@ export default function Grid({
     return false;
   };
 
+  // Calculate user's box count for this game
+  const userBoxCount = boxes.filter(b => b.userId === userId).length;
+  const remainingBoxes = entryFee === 0 ? Math.max(0, 2 - userBoxCount) : null;
+
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
+      {/* Free Game Box Limit Indicator */}
+      {entryFee === 0 && userId && (
+        <div className="mb-4 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <span className="font-medium">Free Game:</span> You can claim up to 2 boxes. 
+                {userBoxCount > 0 && (
+                  <span> You have claimed {userBoxCount} box{userBoxCount === 1 ? '' : 'es'}{remainingBoxes > 0 ? ` and can claim ${remainingBoxes} more` : ' (limit reached)'}.</span>
+                )}
+                {userBoxCount === 0 && (
+                  <span> You can claim 2 boxes for free!</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Numbers Assignment Status */}
       {!numbersAssigned && (
         <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4">
