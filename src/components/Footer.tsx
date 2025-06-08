@@ -10,7 +10,6 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-8">
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">HotBoxes</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">1 HotCoin = $1 USD</p>
             </div>
             <div className="flex space-x-6 text-sm">
               <Link href="/games" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
