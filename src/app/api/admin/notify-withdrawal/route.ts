@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Only initialize Resend if API key is available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,9 +19,10 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
     
-    // Send email notification
-    try {
-      await resend.emails.send({
+    // Send email notification if Resend is configured
+    if (resend) {
+      try {
+        await resend.emails.send({
         from: 'HotBoxes <noreply@playhotboxes.com>',
         to: 'jakelefkow@gmail.com',
         subject: `💸 Withdrawal Request - $${amount} to ${cashAppUsername}`,
@@ -64,10 +66,13 @@ export async function POST(request: NextRequest) {
         `
       });
       
-      console.log('Withdrawal email sent successfully');
-    } catch (emailError) {
-      console.error('Failed to send email, but continuing:', emailError);
-      // Don't fail the whole request if email fails
+        console.log('Withdrawal email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send email, but continuing:', emailError);
+        // Don't fail the whole request if email fails
+      }
+    } else {
+      console.log('Email not sent - Resend API key not configured');
     }
     
     return NextResponse.json({ success: true });
