@@ -365,7 +365,13 @@ export default function GamesPage() {
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-500 dark:text-gray-400">Entry Fee:</span>
                           <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                            {game.entry_fee} HC per box
+                            {game.entry_fee === 0 ? 'Free' : `${game.entry_fee} HC per box`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">Total Payout:</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">
+                            {(game.payout_q1 || 0) + (game.payout_q2 || 0) + (game.payout_q3 || 0) + (game.payout_final || 0)} HC
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
