@@ -60,6 +60,17 @@
         entryFee,
         payouts: { payoutQ1, payoutQ2, payoutQ3, payoutFinal }
       });
+      
+      // Check for potentially problematic content
+      const contentCheck = {
+        nameLength: name.length,
+        homeTeamLength: homeTeam.length,
+        awayTeamLength: awayTeam.length,
+        hasSpecialChars: /[^\w\s-]/.test(`${name}${homeTeam}${awayTeam}`),
+        containsNFL: /nfl/i.test(`${name}${homeTeam}${awayTeam}`),
+        containsNBA: /nba/i.test(`${name}${homeTeam}${awayTeam}`),
+      };
+      console.log('Content analysis:', contentCheck);
 
       // Add timeout to prevent hanging
       const timeoutId = setTimeout(() => {
@@ -96,13 +107,18 @@
         };
         
         console.log('Game data to insert:', gameData);
+        console.log('Game data stringified:', JSON.stringify(gameData, null, 2));
+        console.log('Starting database insert...');
         
+        const startTime = Date.now();
         const { data: game, error: gameError } = await supabase
           .from('games')
           .insert([gameData])
           .select()
           .single();
+        const endTime = Date.now();
           
+        console.log(`Insert completed in ${endTime - startTime}ms`);
         console.log('Insert result:', { game, gameError });
 
         if (gameError) {
