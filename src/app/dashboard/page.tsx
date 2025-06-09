@@ -243,6 +243,8 @@ export default function DashboardPage() {
                   const payoutTransactions = transactions.filter(tx => tx.type === 'payout');
                   const totalWinnings = payoutTransactions.reduce((sum, tx) => sum + tx.amount, 0);
                   console.log('Debug - Total transactions:', transactions.length);
+                  console.log('Debug - All transaction types:', [...new Set(transactions.map(tx => tx.type))]);
+                  console.log('Debug - Sample transactions:', transactions.slice(0, 5));
                   console.log('Debug - Payout transactions:', payoutTransactions.length);
                   console.log('Debug - Payout transactions:', payoutTransactions);
                   console.log('Debug - Total winnings calculated:', totalWinnings);
