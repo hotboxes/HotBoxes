@@ -260,11 +260,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Active Games Section */}
-      {userGames.length > 0 && (
+      {userGames.filter(game => game.is_active).length > 0 && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">🎮 Your Active Games</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {userGames.map((game) => {
+            {userGames.filter(game => game.is_active).map((game) => {
               const gameBoxes = userBoxes.filter(box => box.game_id === game.id);
               const winningStatus = getWinningStatus(game, userBoxes);
               const gameDate = new Date(game.game_date);
@@ -375,6 +375,87 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Completed Games Section */}
+      {userGames.filter(game => !game.is_active).length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">✅ Your Completed Games</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {userGames.filter(game => !game.is_active).map((game) => {
+              const gameBoxes = userBoxes.filter(box => box.game_id === game.id);
+              const winningStatus = getWinningStatus(game, userBoxes);
+              const gameDate = new Date(game.game_date);
+              
+              return (
+                <div key={game.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden opacity-75">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{game.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {game.home_team} vs {game.away_team}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                          ✅ Complete
+                        </span>
+                        <span className="text-xs text-gray-500">{game.sport}</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Your Boxes: {gameBoxes.length} ({gameBoxes.length * game.entry_fee} HC invested)
+                      </p>
+                      
+                      {winningStatus.totalWon > 0 && (
+                        <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-3">
+                          <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                            🎉 You won {winningStatus.totalWon} HC in this game!
+                          </p>
+                          <p className="text-xs text-green-600 dark:text-green-300">
+                            Won {winningStatus.quartersWon} quarter(s)
+                          </p>
+                        </div>
+                      )}
+
+                      {game.numbers_assigned && (
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          {gameBoxes.slice(0, 4).map((box, index) => (
+                            <div key={box.id} className="bg-gray-50 dark:bg-gray-700 p-2 rounded text-center">
+                              <p className="text-xs text-gray-600 dark:text-gray-400">Box {index + 1}</p>
+                              <p className="font-medium">
+                                {game.home_numbers?.[box.row]} - {game.away_numbers?.[box.col]}
+                              </p>
+                            </div>
+                          ))}
+                          {gameBoxes.length > 4 && (
+                            <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded text-center">
+                              <p className="text-xs text-gray-600 dark:text-gray-400">+{gameBoxes.length - 4} more</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {gameDate.toLocaleDateString()} at {gameDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </div>
+                      <Link
+                        href={`/games/${game.id}`}
+                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                      >
+                        View Results →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Achievements */}
       {achievements.length > 0 && (
