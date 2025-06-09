@@ -122,13 +122,15 @@ export default function ScoresPage({ params }: ScoresPageProps) {
   const handleSaveScores = async () => {
     if (!game) return;
 
-    console.log('Starting score save...', { homeScores, awayScores });
     setSaving(true);
     setError(null);
 
+    // Force reset saving state after 10 seconds to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setSaving(false);
+    }, 10000);
+
     try {
-      // Use all scores, not filtered
-      console.log('Sending scores to API...');
       const response = await fetch(`/api/games/${id}/update-scores`, {
         method: 'POST',
         headers: {
@@ -140,22 +142,26 @@ export default function ScoresPage({ params }: ScoresPageProps) {
         }),
       });
 
-      console.log('API response status:', response.status);
-      const data = await response.json();
-      console.log('API response data:', data);
-
       if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.error || 'Failed to update scores');
       }
 
+      // Update the game state with new scores immediately
+      setGame(prev => ({
+        ...prev,
+        home_scores: homeScores,
+        away_scores: awayScores
+      }));
+
       setWinners(calculateWinners());
-      // Refresh game data to show updated scores
-      await checkAdminAndLoadGame();
       alert('Scores updated successfully!');
     } catch (err: any) {
       console.error('Score save error:', err);
       setError(err.message);
+      alert('Failed to save scores: ' + err.message);
     } finally {
+      clearTimeout(timeoutId);
       setSaving(false);
     }
   };
