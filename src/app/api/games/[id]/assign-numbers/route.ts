@@ -8,7 +8,7 @@ export async function POST(
   console.log('Number assignment API called for game:', params.id);
   
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { id } = params;
     
     console.log('Checking user authentication...');
@@ -99,7 +99,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { id } = params;
 
     // Get the game
