@@ -6,18 +6,22 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('Starting payout processing for game:', params.id);
     const supabase = createClient();
     const { id } = params;
 
     // Get the current user and verify admin access
+    console.log('Getting user...');
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
+      console.log('No user found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log('User found:', user.id);
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
@@ -25,28 +29,45 @@ export async function POST(
       .single();
 
     if (!profile?.is_admin) {
+      console.log('User is not admin');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    console.log('Admin access confirmed');
+
     // Get the game with all necessary data
+    console.log('Getting game data...');
     const { data: game, error: gameError } = await supabase
       .from('games')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (gameError || !game) {
+    if (gameError) {
+      console.log('Game error:', gameError);
+      return NextResponse.json({ error: 'Database error: ' + gameError.message }, { status: 500 });
+    }
+
+    if (!game) {
+      console.log('Game not found');
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
+    console.log('Game found:', game.name);
+
     // Validate game state
+    console.log('Validating game state...');
     if (!game.numbers_assigned) {
+      console.log('Numbers not assigned');
       return NextResponse.json({ error: 'Numbers must be assigned' }, { status: 400 });
     }
 
     if (!game.home_scores || !game.away_scores || game.home_scores.length === 0) {
+      console.log('No scores to process');
       return NextResponse.json({ error: 'No scores to process' }, { status: 400 });
     }
+
+    console.log('Game validation passed');
 
     // Get all boxes for this game
     const { data: boxes, error: boxesError } = await supabase
