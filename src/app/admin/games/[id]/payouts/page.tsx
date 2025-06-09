@@ -152,8 +152,8 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
       // Check each grid position to see if it matches the score digits
       for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
-          const homeNumber = game.home_numbers[row];
-          const awayNumber = game.away_numbers[col];
+          const homeNumber = game.home_numbers[col]; // HOME = HORIZONTAL = COLUMN
+          const awayNumber = game.away_numbers[row]; // AWAY = VERTICAL = ROW
           
           if (homeNumber === homeDigit && awayNumber === awayDigit) {
             winningRow = row;

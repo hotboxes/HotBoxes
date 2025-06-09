@@ -360,12 +360,7 @@ export default function Grid({
                   const homeDigit = homeScore % 10;
                   const awayDigit = awayScore % 10;
                   
-                  // DEBUG: Show calculation for one box
-                  if (row === 0 && col === 0) {
-                    console.log(`Period ${i}: ${homeScore}-${awayScore} → digits ${homeDigit}-${awayDigit}`);
-                    console.log(`Looking for home=${homeDigit} at row, away=${awayDigit} at col`);
-                    console.log(`This box: home=${homeNumber}, away=${awayNumber}`);
-                  }
+                  // Check if this box matches the score
                   
                   if (homeDigit === homeNumber && awayDigit === awayNumber) {
                     isWinner = true;
@@ -381,18 +376,14 @@ export default function Grid({
                     h-12 sm:h-16 border rounded-md cursor-pointer transition-all 
                     ${getBoxColor(box)}
                     ${box.userId === userId ? 'border-indigo-400' : 'border-gray-200 dark:border-gray-700'}
-                    ${isWinner ? 'ring-4 ring-red-500 bg-red-200 scale-110' : ''}
+                    ${isWinner ? 'ring-2 ring-green-500 scale-105' : ''}
                     ${!box.userId && !readOnly ? 'hover:bg-indigo-50 dark:hover:bg-indigo-800 hover:border-indigo-300' : ''}
                   `}
                   whileHover={!box.userId && !readOnly ? { scale: 1.05 } : {}}
                   whileTap={!box.userId && !readOnly ? { scale: 0.95 } : {}}
                   onClick={() => handleBoxClick(box)}
                 >
-                  <div className="w-full h-full flex items-center justify-center relative">
-                    {/* SHOW ROW,COL POSITION */}
-                    <div className="absolute top-0 left-0 text-xs text-black font-bold bg-white px-1">
-                      {row},{col}
-                    </div>
+                  <div className="w-full h-full flex items-center justify-center">
                     {box.userId && (
                       <div className={`w-3 h-3 rounded-full ${box.userId === userId ? 'bg-indigo-500' : 'bg-gray-500'}`} />
                     )}
