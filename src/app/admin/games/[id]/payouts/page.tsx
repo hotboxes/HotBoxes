@@ -119,14 +119,12 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
     const totalRevenue = totalBoxesSold * (game.entry_fee || 0);
     const prizePool = Math.floor(totalRevenue * 0.9);
     const houseCut = totalRevenue - prizePool;
-    const prizePerPeriod = Math.floor(prizePool / 4);
 
     return {
       totalBoxesSold,
       totalRevenue,
       prizePool,
-      houseCut,
-      prizePerPeriod
+      houseCut
     };
   };
 
@@ -261,10 +259,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
                 <span className="text-gray-600 dark:text-gray-400">House Cut (10%)</span>
                 <span className="font-medium text-gray-900 dark:text-white">{gameStats.houseCut} HC</span>
               </div>
-              <div className="flex justify-between border-t pt-4">
-                <span className="text-gray-600 dark:text-gray-400">Prize per Period</span>
-                <span className="font-medium text-indigo-600 dark:text-indigo-400">{gameStats.prizePerPeriod} HC</span>
-              </div>
+              {/* Prize per Period removed - using custom amounts instead */}
             </div>
           )}
 
