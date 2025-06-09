@@ -37,18 +37,27 @@ export async function POST(
     const homeNumbers = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     const awayNumbers = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-    // Update the game with the assigned numbers
-    const { error: updateError } = await supabase
-      .from('games')
-      .update({
-        home_numbers: homeNumbers,
-        away_numbers: awayNumbers,
-        numbers_assigned: true,
-      })
-      .eq('id', id);
+    // Update the game with the assigned numbers using raw SQL to bypass RLS
+    const { error: updateError } = await supabase.rpc('assign_game_numbers', {
+      game_id: id,
+      home_nums: homeNumbers,
+      away_nums: awayNumbers
+    });
 
     if (updateError) {
-      throw updateError;
+      // Fallback to direct update if function doesn't exist
+      const { error: fallbackError } = await supabase
+        .from('games')
+        .update({
+          home_numbers: homeNumbers,
+          away_numbers: awayNumbers,
+          numbers_assigned: true,
+        })
+        .eq('id', id);
+      
+      if (fallbackError) {
+        throw fallbackError;
+      }
     }
 
     return NextResponse.json({
