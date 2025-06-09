@@ -311,7 +311,10 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                        {gameStats?.prizePerPeriod} HC
+                        {winner.period === '1st Quarter' ? game.payout_q1 :
+                         winner.period === 'Halftime' ? game.payout_q2 :
+                         winner.period === '3rd Quarter' ? game.payout_q3 :
+                         winner.period === 'Final' ? game.payout_final : 0} HC
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         Grid: ({winner.gridPosition.row}, {winner.gridPosition.col})
