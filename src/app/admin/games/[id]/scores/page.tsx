@@ -64,11 +64,11 @@ export default function ScoresPage({ params }: ScoresPageProps) {
       setGame(gameData);
       
       // Set existing scores if any
-      if (gameData.homeScores && gameData.homeScores.length > 0) {
-        setHomeScores([...gameData.homeScores, ...Array(4 - gameData.homeScores.length).fill(0)].slice(0, 4));
+      if (gameData.home_scores && gameData.home_scores.length > 0) {
+        setHomeScores([...gameData.home_scores, ...Array(4 - gameData.home_scores.length).fill(0)].slice(0, 4));
       }
-      if (gameData.awayScores && gameData.awayScores.length > 0) {
-        setAwayScores([...gameData.awayScores, ...Array(4 - gameData.awayScores.length).fill(0)].slice(0, 4));
+      if (gameData.away_scores && gameData.away_scores.length > 0) {
+        setAwayScores([...gameData.away_scores, ...Array(4 - gameData.away_scores.length).fill(0)].slice(0, 4));
       }
     } catch (err) {
       setError('Failed to load game');
@@ -92,7 +92,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
   };
 
   const calculateWinners = () => {
-    if (!game?.homeNumbers || !game?.awayNumbers) return [];
+    if (!game?.home_numbers || !game?.away_numbers) return [];
     
     const calculatedWinners = [];
     for (let i = 0; i < homeScores.length; i++) {
@@ -100,8 +100,8 @@ export default function ScoresPage({ params }: ScoresPageProps) {
         const homeDigit = homeScores[i] % 10;
         const awayDigit = awayScores[i] % 10;
         
-        const homeRow = game.homeNumbers.indexOf(homeDigit);
-        const awayCol = game.awayNumbers.indexOf(awayDigit);
+        const homeRow = game.home_numbers.indexOf(homeDigit);
+        const awayCol = game.away_numbers.indexOf(awayDigit);
         
         if (homeRow !== -1 && awayCol !== -1) {
           calculatedWinners.push({
@@ -122,30 +122,27 @@ export default function ScoresPage({ params }: ScoresPageProps) {
   const handleSaveScores = async () => {
     if (!game) return;
 
+    console.log('Starting score save...', { homeScores, awayScores });
     setSaving(true);
     setError(null);
 
     try {
-      // Filter out zero scores for the API call
-      const nonZeroHomeScores = homeScores.filter((score, index) => 
-        score > 0 || awayScores[index] > 0
-      );
-      const nonZeroAwayScores = awayScores.filter((score, index) => 
-        score > 0 || homeScores[index] > 0
-      );
-
+      // Use all scores, not filtered
+      console.log('Sending scores to API...');
       const response = await fetch(`/api/games/${id}/update-scores`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          homeScores: nonZeroHomeScores,
-          awayScores: nonZeroAwayScores,
+          homeScores,
+          awayScores,
         }),
       });
 
+      console.log('API response status:', response.status);
       const data = await response.json();
+      console.log('API response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to update scores');
@@ -154,6 +151,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
       setWinners(calculateWinners());
       alert('Scores updated successfully!');
     } catch (err: any) {
+      console.error('Score save error:', err);
       setError(err.message);
     } finally {
       setSaving(false);
