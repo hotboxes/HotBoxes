@@ -113,11 +113,24 @@ export async function POST(
                               period === 2 ? game.payout_q3 :
                               period === 3 ? game.payout_final : 0;
           
+          // Get current balance first
+          const { data: currentProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('hotcoin_balance')
+            .eq('id', winningBox.user_id)
+            .single();
+
+          if (profileError) {
+            console.error(`Error getting profile for user ${winningBox.user_id}:`, profileError);
+            continue;
+          }
+
           // Award payout
+          const newBalance = (currentProfile.hotcoin_balance || 0) + payoutAmount;
           const { error: balanceError } = await supabase
             .from('profiles')
             .update({
-              hotcoin_balance: supabase.raw('hotcoin_balance + ?', [payoutAmount])
+              hotcoin_balance: newBalance
             })
             .eq('id', winningBox.user_id);
 
