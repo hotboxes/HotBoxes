@@ -1,27 +1,40 @@
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
+  console.log('Cron job started - checking for games needing number assignment');
+  
   try {
-    const supabase = createClient();
+    // Use service role client for cron jobs (no auth required)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     // Get all active games that don't have numbers assigned yet
+    console.log('Querying for games...');
     const { data: games, error: gamesError } = await supabase
       .from('games')
       .select('*')
       .eq('is_active', true)
       .eq('numbers_assigned', false);
 
+    console.log('Query result:', { games: games?.length || 0, error: gamesError });
+
     if (gamesError) {
+      console.error('Database error:', gamesError);
       throw gamesError;
     }
 
     if (!games || games.length === 0) {
+      console.log('No games found needing assignment');
       return NextResponse.json({ 
         message: 'No games need number assignment',
         gamesProcessed: 0
       });
     }
+
+    console.log(`Found ${games.length} games to check for assignment`);
 
     const currentTime = new Date().getTime();
     const tenMinutesInMs = 10 * 60 * 1000;
