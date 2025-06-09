@@ -145,13 +145,22 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
       const homeDigit = homeScore % 10;
       const awayDigit = awayScore % 10;
       
+      console.log(`Period ${period}: Score ${homeScore}-${awayScore}, Digits: ${homeDigit}-${awayDigit}`);
+      console.log('Home numbers array:', game.home_numbers);
+      console.log('Away numbers array:', game.away_numbers);
+      
       const homeRow = game.home_numbers.indexOf(homeDigit);
       const awayCol = game.away_numbers.indexOf(awayDigit);
+      
+      console.log(`Found homeDigit ${homeDigit} at row ${homeRow}, awayDigit ${awayDigit} at col ${awayCol}`);
       
       if (homeRow !== -1 && awayCol !== -1) {
         const winningBox = boxes?.find(box => 
           box.row === homeRow && box.col === awayCol
         );
+        console.log(`Period ${period}: Looking for box at row ${homeRow}, col ${awayCol}`);
+        console.log('Available boxes:', boxes?.map(b => `(${b.row},${b.col})`).slice(0, 5));
+        console.log('Found box:', winningBox);
         
         winners.push({
           period: periodLabels[period] || `Period ${period + 1}`,
