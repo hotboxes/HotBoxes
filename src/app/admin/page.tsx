@@ -444,6 +444,53 @@ export default function AdminPage() {
     setSelectedUsers([]);
   };
 
+  const handleMassAssignNumbers = async () => {
+    const gamesNeedingNumbers = games.filter(g => g.is_active && !g.numbers_assigned);
+    
+    if (gamesNeedingNumbers.length === 0) {
+      alert('No active games need number assignment');
+      return;
+    }
+
+    if (!confirm(`Assign numbers to ${gamesNeedingNumbers.length} games?`)) {
+      return;
+    }
+
+    try {
+      let assigned = 0;
+      
+      for (const game of gamesNeedingNumbers) {
+        const shuffle = (arr: number[]) => {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        };
+        
+        const home = shuffle([0,1,2,3,4,5,6,7,8,9]);
+        const away = shuffle([0,1,2,3,4,5,6,7,8,9]);
+        
+        const { error } = await supabase
+          .from('games')
+          .update({ 
+            home_numbers: home, 
+            away_numbers: away, 
+            numbers_assigned: true 
+          })
+          .eq('id', game.id);
+        
+        if (!error) assigned++;
+      }
+      
+      alert(`Successfully assigned numbers to ${assigned} games!`);
+      loadAdminData();
+    } catch (error) {
+      console.error('Mass assign error:', error);
+      alert('Failed to assign numbers');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -1029,10 +1076,10 @@ export default function AdminPage() {
               <div className="text-2xl mb-2">📧</div>
               <div className="text-sm font-medium text-pink-700 dark:text-pink-300">Support Tickets</div>
             </Link>
-            <Link href="/admin/cron-test" className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
-              <div className="text-2xl mb-2">🔧</div>
-              <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Cron Test</div>
-            </Link>
+            <button onClick={handleMassAssignNumbers} className="bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 p-4 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">🎲</div>
+              <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Assign Numbers</div>
+            </button>
             <Link href="/games" className="bg-gray-50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-900/50 p-4 rounded-lg text-center transition-colors">
               <div className="text-2xl mb-2">🌐</div>
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Live Site</div>
