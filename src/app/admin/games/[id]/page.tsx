@@ -231,7 +231,7 @@ export default function AdminGamePage() {
       if (error) throw error;
 
       // Reload game data
-      await loadGameData();
+      await loadAdminGameData();
       alert('Game closed successfully!');
     } catch (error: any) {
       console.error('Error closing game:', error);
