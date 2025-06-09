@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function POST(
@@ -7,33 +6,12 @@ export async function POST(
 ) {
   try {
     console.log('Starting payout processing for game:', params.id);
-    const supabase = await createClient();
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     const { id } = params;
-
-    // Get the current user and verify admin access
-    console.log('Getting user...');
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.log('No user found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    console.log('User found:', user.id);
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.is_admin) {
-      console.log('User is not admin');
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    console.log('Admin access confirmed');
 
     // Get the game with all necessary data
     console.log('Getting game data...');
