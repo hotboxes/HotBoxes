@@ -200,19 +200,25 @@ export default function Grid({
       return false;
     }
     
-    // Get the actual numbers for this position
-    const homeNumber = homeNumbers[row];
-    const awayNumber = awayNumbers[col];
+    // Use the same coordinate mapping logic as the payouts calculation
+    const homeNumber = homeNumbers[col]; // HOME = HORIZONTAL = COLUMN
+    const awayNumber = awayNumbers[row]; // AWAY = VERTICAL = ROW
     
-    // FORCE CORRECT WINNERS based on known data
-    // Home: [7,4,2,1,6,0,8,9,3,5], Away: [3,2,5,1,8,0,7,9,4,6]
-    // Scores: [0,0,6,6] vs [7,7,0,6]
-    // Winners should be: (5,6), (4,5), (4,9)
-    
-    if ((row === 5 && col === 6) || // 0-7 winner
-        (row === 4 && col === 5) || // 6-0 winner  
-        (row === 4 && col === 9)) { // 6-6 winner
-      return true;
+    // Check each period's scores to see if this box is a winner
+    for (let i = 0; i < homeScores.length && i < awayScores.length; i++) {
+      const homeScore = homeScores[i];
+      const awayScore = awayScores[i];
+      
+      // Skip 0-0 periods (no data)
+      if (homeScore === 0 && awayScore === 0) continue;
+      
+      const homeDigit = homeScore % 10;
+      const awayDigit = awayScore % 10;
+      
+      // Check if this box matches the score digits
+      if (homeDigit === homeNumber && awayDigit === awayNumber) {
+        return true;
+      }
     }
     
     return false;
