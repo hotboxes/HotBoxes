@@ -238,7 +238,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Total Winnings</p>
-              <p className="text-2xl font-bold">{stats.totalWon} HC</p>
+              <p className="text-2xl font-bold">{transactions.filter(tx => tx.type === 'payout').reduce((sum, tx) => sum + tx.amount, 0)} HC</p>
             </div>
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">🏆</span>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100">Games Played</p>
-              <p className="text-2xl font-bold">{stats.gamesPlayed}</p>
+              <p className="text-2xl font-bold">{userGames.length}</p>
             </div>
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">📊</span>
