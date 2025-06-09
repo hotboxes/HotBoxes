@@ -21,8 +21,10 @@ export default function GamePage() {
 
   const loadGameData = async () => {
     try {
+      console.log('Loading game data for ID:', id);
       // Get user information
       const { data: { user: authUser } } = await supabase.auth.getUser();
+      console.log('User loaded:', authUser?.id || 'No user');
       setUser(authUser);
       
       // Fetch game details
@@ -32,16 +34,22 @@ export default function GamePage() {
         .eq('id', id)
         .single();
 
+      console.log('Game query result:', { gameData, gameError });
+
       if (gameError || !gameData) {
+        console.error('Game not found:', gameError);
         setError('Game not found');
         setLoading(false);
         return;
       }
 
+      console.log('Setting game data:', gameData);
       setGame(gameData);
     } catch (err: any) {
+      console.error('Error in loadGameData:', err);
       setError(err.message);
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };

@@ -43,13 +43,16 @@ export default function Grid({
     if (!gameId) return;
     
     const loadBoxes = async () => {
+      console.log('Grid: Loading boxes for game:', gameId);
       const { data, error } = await supabase
         .from('boxes')
         .select('*')
         .eq('game_id', gameId);
       
+      console.log('Grid: Boxes query result:', { data: data?.length, error });
+      
       if (!error && data) {
-        console.log('Loaded boxes:', data.length, data.slice(0, 3)); // Debug log
+        console.log('Grid: Setting boxes data, count:', data.length);
         setBoxes(data.map(box => ({
           id: box.id,
           row: box.row,
@@ -57,6 +60,8 @@ export default function Grid({
           userId: box.user_id,
           gameId: box.game_id
         })));
+      } else if (error) {
+        console.error('Grid: Error loading boxes:', error);
       }
     };
     
