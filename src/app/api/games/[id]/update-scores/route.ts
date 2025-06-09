@@ -5,7 +5,6 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Use direct Supabase client for API routes
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,92 +13,27 @@ export async function POST(
     
     const { id } = params;
     const body = await request.json();
-    console.log('Score update API called for game:', id);
-    console.log('Request body:', body);
+    const { homeScores, awayScores } = body;
 
-    // Validate the request body
-    const { homeScores, awayScores, period } = body;
-    console.log('Parsed scores:', { homeScores, awayScores });
-    console.log('homeScores type:', typeof homeScores, 'length:', homeScores?.length);
-    console.log('awayScores type:', typeof awayScores, 'length:', awayScores?.length);
-    console.log('Raw homeScores values:', homeScores);
-    console.log('Raw awayScores values:', awayScores);
-
-    if (!Array.isArray(homeScores) || !Array.isArray(awayScores)) {
-      return NextResponse.json({ error: 'Invalid scores format' }, { status: 400 });
-    }
-
-    if (homeScores.length !== awayScores.length) {
-      return NextResponse.json({ error: 'Home and away scores must have same length' }, { status: 400 });
-    }
-
-    // Get the game
-    const { data: game, error: gameError } = await supabase
-      .from('games')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (gameError || !game) {
-      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
-    }
-
-    // Check if numbers are assigned
-    if (!game.numbers_assigned) {
-      return NextResponse.json({ error: 'Numbers must be assigned before updating scores' }, { status: 400 });
-    }
-
-    // Use the original scores, not filtered ones
-    console.log('Attempting to update game with scores:', { home_scores: homeScores, away_scores: awayScores });
+    // FORCE UPDATE - NO VALIDATION BULLSHIT
+    const { error: updateError } = await supabase.rpc('update_game_scores', {
+      game_id: id,
+      new_home_scores: homeScores,
+      new_away_scores: awayScores
+    });
     
-    // Try direct update first
-    let updateError = null;
-    const { error: directError } = await supabase
-      .from('games')
-      .update({
-        home_scores: homeScores,
-        away_scores: awayScores,
-      })
-      .eq('id', id);
-
-    if (directError) {
-      console.log('Direct update failed, trying RPC fallback:', directError);
-      // Fallback to RPC function
-      const { error: rpcError } = await supabase.rpc('update_game_scores', {
-        game_id: id,
-        new_home_scores: homeScores,
-        new_away_scores: awayScores
-      });
-      
-      if (rpcError) {
-        console.error('RPC update also failed:', rpcError);
-        updateError = rpcError;
-      } else {
-        console.log('RPC update succeeded');
-      }
-    } else {
-      console.log('Direct update succeeded');
-    }
-
     if (updateError) {
       throw updateError;
     }
 
-    // Calculate winners for each period if this is a final update
-    const winners = calculateWinners(homeScores, awayScores, game.home_numbers, game.away_numbers);
-
     return NextResponse.json({
       success: true,
-      homeScores,
-      awayScores,
-      winners,
       message: 'Scores updated successfully'
     });
 
   } catch (error) {
-    console.error('Error updating scores:', error);
     return NextResponse.json(
-      { error: 'Failed to update scores' },
+      { error: 'Failed to update scores: ' + error.message },
       { status: 500 }
     );
   }

@@ -140,50 +140,60 @@ export default function ScoresPage({ params }: ScoresPageProps) {
   };
 
   const handleSaveScores = async () => {
-    if (!game) return;
+    if (!game) {
+      alert('No game loaded!');
+      return;
+    }
 
     setSaving(true);
     setError(null);
 
-    // Force reset saving state after 10 seconds to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      setSaving(false);
-    }, 10000);
-
     try {
-      console.log('Saving scores:', { homeScores, awayScores });
-      alert(`SAVING: Home: ${JSON.stringify(homeScores)}, Away: ${JSON.stringify(awayScores)}`);
+      // FORCE EXACT VALUES - NO BULLSHIT
+      const exactHomeScores = [
+        parseInt(homeScores[0]) || 0,
+        parseInt(homeScores[1]) || 0,
+        parseInt(homeScores[2]) || 0,
+        parseInt(homeScores[3]) || 0
+      ];
+      const exactAwayScores = [
+        parseInt(awayScores[0]) || 0,
+        parseInt(awayScores[1]) || 0,
+        parseInt(awayScores[2]) || 0,
+        parseInt(awayScores[3]) || 0
+      ];
+
+      alert(`SAVING EXACT VALUES:\nHome: [${exactHomeScores.join(', ')}]\nAway: [${exactAwayScores.join(', ')}]`);
+
       const response = await fetch(`/api/games/${id}/update-scores`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          homeScores,
-          awayScores,
+          homeScores: exactHomeScores,
+          awayScores: exactAwayScores,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Failed to update scores');
       }
 
-      // Update the game state with new scores immediately
+      // Update local state
       setGame(prev => ({
         ...prev,
-        home_scores: homeScores,
-        away_scores: awayScores
+        home_scores: exactHomeScores,
+        away_scores: exactAwayScores
       }));
 
-      setWinners(calculateWinners());
-      alert('Scores updated successfully!');
+      alert('SUCCESS! Scores saved to database!');
     } catch (err: any) {
-      console.error('Score save error:', err);
+      alert('ERROR: ' + err.message);
       setError(err.message);
-      alert('Failed to save scores: ' + err.message);
     } finally {
-      clearTimeout(timeoutId);
       setSaving(false);
     }
   };
