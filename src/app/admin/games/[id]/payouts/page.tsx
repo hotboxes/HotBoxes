@@ -145,12 +145,28 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
       const homeDigit = homeScore % 10;
       const awayDigit = awayScore % 10;
       
-      const homeRow = game.home_numbers.indexOf(homeDigit);
-      const awayCol = game.away_numbers.indexOf(awayDigit);
+      // Find the correct grid position using same logic as Grid component
+      let winningRow = -1;
+      let winningCol = -1;
       
-      if (homeRow !== -1 && awayCol !== -1) {
+      // Check each grid position to see if it matches the score digits
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+          const homeNumber = game.home_numbers[row];
+          const awayNumber = game.away_numbers[col];
+          
+          if (homeNumber === homeDigit && awayNumber === awayDigit) {
+            winningRow = row;
+            winningCol = col;
+            break;
+          }
+        }
+        if (winningRow !== -1) break;
+      }
+      
+      if (winningRow !== -1 && winningCol !== -1) {
         const winningBox = boxes?.find(box => 
-          box.row === homeRow && box.col === awayCol
+          box.row === winningRow && box.col === winningCol
         );
         
         winners.push({
@@ -159,7 +175,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
           awayScore,
           homeDigit,
           awayDigit,
-          gridPosition: { row: homeRow, col: awayCol },
+          gridPosition: { row: winningRow, col: winningCol },
           winningBox,
           winner: winningBox?.profiles
         });
