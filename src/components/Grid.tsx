@@ -359,7 +359,11 @@ export default function Grid({
                   whileTap={!box.userId && !readOnly ? { scale: 0.95 } : {}}
                   onClick={() => handleBoxClick(box)}
                 >
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center relative">
+                    {/* SHOW ROW,COL POSITION */}
+                    <div className="absolute top-0 left-0 text-xs text-black font-bold bg-white px-1">
+                      {row},{col}
+                    </div>
                     {box.userId && (
                       <div className={`w-3 h-3 rounded-full ${box.userId === userId ? 'bg-indigo-500' : 'bg-gray-500'}`} />
                     )}
