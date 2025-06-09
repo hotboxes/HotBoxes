@@ -197,16 +197,6 @@ export default function GamePage() {
       </div>
       
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg p-2 sm:p-6">
-        {/* DEBUG: Show what data is being passed to Grid */}
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-          <h3 className="font-bold">DEBUG - Data being passed to Grid:</h3>
-          <p><strong>Home Scores:</strong> {JSON.stringify(game.home_scores)}</p>
-          <p><strong>Away Scores:</strong> {JSON.stringify(game.away_scores)}</p>
-          <p><strong>Home Numbers:</strong> {JSON.stringify(game.home_numbers)}</p>
-          <p><strong>Away Numbers:</strong> {JSON.stringify(game.away_numbers)}</p>
-          <p><strong>Numbers Assigned:</strong> {game.numbers_assigned ? 'Yes' : 'No'}</p>
-        </div>
-        
         <Grid 
           gameId={id} 
           userId={user?.id} 
