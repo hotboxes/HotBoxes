@@ -62,21 +62,21 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </main>
       <Footer />
       
-      {/* Age Verification Modal - Show first */}
-      {user && !ageVerified && (
+      {/* Age Verification Modal - Show first - TEMPORARILY DISABLED */}
+      {/* {user && !ageVerified && (
         <AgeVerificationModal 
           user={user} 
           onVerify={handleAgeVerify}
         />
-      )}
+      )} */}
       
-      {/* Terms Acceptance Modal - Show after age verification */}
-      {user && ageVerified && !termsAccepted && (
+      {/* Terms Acceptance Modal - Show after age verification - TEMPORARILY DISABLED */}
+      {/* {user && ageVerified && !termsAccepted && (
         <TermsAcceptanceModal 
           user={user} 
           onAccept={handleTermsAccept}
         />
-      )}
+      )} */}
     </div>
   );
 }
