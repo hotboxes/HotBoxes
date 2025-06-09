@@ -238,7 +238,17 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Total Winnings</p>
-              <p className="text-2xl font-bold">{transactions.filter(tx => tx.type === 'payout').reduce((sum, tx) => sum + tx.amount, 0)} HC</p>
+              <p className="text-2xl font-bold">
+                {(() => {
+                  const payoutTransactions = transactions.filter(tx => tx.type === 'payout');
+                  const totalWinnings = payoutTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+                  console.log('Debug - Total transactions:', transactions.length);
+                  console.log('Debug - Payout transactions:', payoutTransactions.length);
+                  console.log('Debug - Payout transactions:', payoutTransactions);
+                  console.log('Debug - Total winnings calculated:', totalWinnings);
+                  return totalWinnings;
+                })()} HC
+              </p>
             </div>
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">🏆</span>
