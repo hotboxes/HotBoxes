@@ -1,13 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   console.log('=== CRON JOB DEBUG START ===');
   
   try {
-    console.log('Step 0: Importing supabase...');
-    const { createClient } = await import('@supabase/supabase-js');
-    console.log('Step 0.1: Supabase import successful');
-    
     console.log('Step 1: Creating supabase client...');
     console.log('Environment check:', {
       hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -24,14 +21,14 @@ export async function GET(request: Request) {
     console.log('Step 2: Supabase client created successfully');
 
     // Get all active games that don't have numbers assigned yet
-    console.log('Querying for games...');
+    console.log('Step 3: Querying for games...');
     const { data: games, error: gamesError } = await supabase
       .from('games')
       .select('*')
       .eq('is_active', true)
       .eq('numbers_assigned', false);
 
-    console.log('Query result:', { games: games?.length || 0, error: gamesError });
+    console.log('Step 4: Query result:', { games: games?.length || 0, error: gamesError });
 
     if (gamesError) {
       console.error('Database error:', gamesError);
@@ -57,9 +54,13 @@ export async function GET(request: Request) {
       const gameTime = new Date(game.game_date).getTime();
       const timeDifference = gameTime - currentTime;
 
+      console.log(`Checking game "${game.name}": ${Math.ceil(timeDifference / 1000 / 60)} minutes until start`);
+
       // If it's 10 minutes or less before the game, assign numbers
       if (timeDifference <= tenMinutesInMs) {
         try {
+          console.log(`Assigning numbers for game: ${game.name}`);
+          
           // Generate random numbers
           const homeNumbers = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
           const awayNumbers = shuffleArray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
             status: 'success'
           });
 
-          console.log(`Numbers assigned for game: ${game.name} (${game.id})`);
+          console.log(`Numbers assigned successfully for game: ${game.name} (${game.id})`);
         } catch (error) {
           console.error(`Error assigning numbers for game ${game.id}:`, error);
           results.push({
