@@ -138,41 +138,31 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
     const winners = [];
     const periodLabels = ['1st Quarter', 'Halftime', '3rd Quarter', 'Final'];
 
-    // For each period with scores
     for (let period = 0; period < game.home_scores.length; period++) {
       const homeScore = game.home_scores[period];
       const awayScore = game.away_scores[period];
       
-      if (homeScore === 0 && awayScore === 0) continue; // Skip periods with no scores
-      
       const homeDigit = homeScore % 10;
       const awayDigit = awayScore % 10;
       
-      // Find all boxes that match these digits (same logic as Grid component)
-      for (let row = 0; row < 10; row++) {
-        for (let col = 0; col < 10; col++) {
-          const homeNumber = game.home_numbers[row];
-          const awayNumber = game.away_numbers[col];
-          
-          // Check if this box wins this period
-          if (homeNumber === homeDigit && awayNumber === awayDigit) {
-            const winningBox = boxes?.find(box => 
-              box.row === row && box.col === col
-            );
-            
-            winners.push({
-              period: periodLabels[period] || `Period ${period + 1}`,
-              homeScore,
-              awayScore,
-              homeDigit,
-              awayDigit,
-              gridPosition: { row, col },
-              winningBox,
-              winner: winningBox?.profiles
-            });
-            break; // Found the winner for this period
-          }
-        }
+      const homeRow = game.home_numbers.indexOf(homeDigit);
+      const awayCol = game.away_numbers.indexOf(awayDigit);
+      
+      if (homeRow !== -1 && awayCol !== -1) {
+        const winningBox = boxes?.find(box => 
+          box.row === homeRow && box.col === awayCol
+        );
+        
+        winners.push({
+          period: periodLabels[period] || `Period ${period + 1}`,
+          homeScore,
+          awayScore,
+          homeDigit,
+          awayDigit,
+          gridPosition: { row: homeRow, col: awayCol },
+          winningBox,
+          winner: winningBox?.profiles
+        });
       }
     }
 
