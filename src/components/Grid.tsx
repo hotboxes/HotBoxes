@@ -342,8 +342,37 @@ export default function Grid({
                 );
               }
               
-              // FORCE CORRECT HIGHLIGHTING - HARDCODED FIX
-              const isWinner = (row === 5 && col === 6) || (row === 4 && col === 5) || (row === 4 && col === 9);
+              // CALCULATE WINNERS CORRECTLY
+              let isWinner = false;
+              
+              if (numbersAssigned && homeNumbers.length > 0 && awayNumbers.length > 0) {
+                const homeNumber = homeNumbers[col]; // HOME = HORIZONTAL = COLUMN
+                const awayNumber = awayNumbers[row]; // AWAY = VERTICAL = ROW
+                
+                // Check each period's scores
+                for (let i = 0; i < homeScores.length && i < awayScores.length; i++) {
+                  const homeScore = homeScores[i];
+                  const awayScore = awayScores[i];
+                  
+                  // Skip 0-0 periods (no data)
+                  if (homeScore === 0 && awayScore === 0) continue;
+                  
+                  const homeDigit = homeScore % 10;
+                  const awayDigit = awayScore % 10;
+                  
+                  // DEBUG: Show calculation for one box
+                  if (row === 0 && col === 0) {
+                    console.log(`Period ${i}: ${homeScore}-${awayScore} → digits ${homeDigit}-${awayDigit}`);
+                    console.log(`Looking for home=${homeDigit} at row, away=${awayDigit} at col`);
+                    console.log(`This box: home=${homeNumber}, away=${awayNumber}`);
+                  }
+                  
+                  if (homeDigit === homeNumber && awayDigit === awayNumber) {
+                    isWinner = true;
+                    break;
+                  }
+                }
+              }
               
               return (
                 <motion.div
