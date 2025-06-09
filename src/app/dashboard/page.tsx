@@ -105,54 +105,20 @@ export default function DashboardPage() {
     }
   };
 
-  // Calculate user statistics
-  const getUserStats = () => {
-    const gamesPlayed = userGames.length;
-    
-    // Calculate net winnings: money won/refunded minus money spent on bets
-    // Note: bet amounts are stored as negative values, so we use Math.abs()
-    const totalSpent = transactions.filter(tx => tx.type === 'bet').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-    const totalWon = transactions.filter(tx => tx.type === 'payout').reduce((sum, tx) => sum + tx.amount, 0);
-    const totalRefunded = transactions.filter(tx => tx.type === 'refund').reduce((sum, tx) => sum + tx.amount, 0);
-    const netWinnings = totalWon + totalRefunded - totalSpent;
-    
-    // Deposits and withdrawals are filtered by verification_status since they require admin approval
-    const totalDeposited = transactions.filter(tx => tx.type === 'purchase' && tx.verification_status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
-    const totalWithdrawn = transactions.filter(tx => tx.type === 'withdrawal' && tx.verification_status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
-    const winRate = gamesPlayed > 0 ? ((transactions.filter(tx => tx.type === 'payout').length / gamesPlayed) * 100) : 0;
-    
-    const biggestWin = Math.max(...transactions.filter(tx => tx.type === 'payout').map(tx => tx.amount), 0);
-    const favoriteSeport = userGames.reduce((acc, game) => {
-      acc[game.sport] = (acc[game.sport] || 0) + 1;
-      return acc;
-    }, {} as any);
-    const topSport = Object.keys(favoriteSeport).reduce((a, b) => favoriteSeport[a] > favoriteSeport[b] ? a : b, 'None');
-
-    return {
-      gamesPlayed,
-      totalSpent,
-      totalWon,
-      totalDeposited,
-      totalWithdrawn,
-      netWinnings,
-      winRate,
-      biggestWin,
-      topSport
-    };
-  };
 
   // Get user achievements
   const getAchievements = () => {
-    const stats = getUserStats();
     const achievements = [];
+    const gamesPlayed = userGames.length;
+    const totalWon = transactions.filter(tx => tx.type === 'payout').reduce((sum, tx) => sum + tx.amount, 0);
+    const biggestWin = Math.max(...transactions.filter(tx => tx.type === 'payout').map(tx => tx.amount), 0);
+    const totalDeposited = transactions.filter(tx => tx.type === 'purchase' && tx.verification_status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
 
-    if (stats.gamesPlayed >= 1) achievements.push({ name: 'First Timer', icon: '🎯', description: 'Played your first game' });
-    if (stats.gamesPlayed >= 10) achievements.push({ name: 'Regular Player', icon: '🎮', description: 'Played 10+ games' });
-    if (stats.totalWon > 0) achievements.push({ name: 'Winner', icon: '🏆', description: 'Won your first payout' });
-    if (stats.biggestWin >= 100) achievements.push({ name: 'Big Winner', icon: '💎', description: 'Won 100+ HC in a single game' });
-    if (stats.totalDeposited >= 100) achievements.push({ name: 'High Roller', icon: '💰', description: 'Deposited $100+' });
-    if (stats.winRate >= 50) achievements.push({ name: 'Lucky Streak', icon: '🍀', description: 'Win rate over 50%' });
-    if (stats.topSport !== 'None') achievements.push({ name: `${stats.topSport} Fan`, icon: stats.topSport === 'NFL' ? '🏈' : '🏀', description: `Prefers ${stats.topSport} games` });
+    if (gamesPlayed >= 1) achievements.push({ name: 'First Timer', icon: '🎯', description: 'Played your first game' });
+    if (gamesPlayed >= 10) achievements.push({ name: 'Regular Player', icon: '🎮', description: 'Played 10+ games' });
+    if (totalWon > 0) achievements.push({ name: 'Winner', icon: '🏆', description: 'Won your first payout' });
+    if (biggestWin >= 100) achievements.push({ name: 'Big Winner', icon: '💎', description: 'Won 100+ HC in a single game' });
+    if (totalDeposited >= 100) achievements.push({ name: 'High Roller', icon: '💰', description: 'Deposited $100+' });
 
     return achievements;
   };
@@ -227,7 +193,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  const stats = getUserStats();
   const achievements = getAchievements();
   const recommendations = getRecommendations();
 
@@ -410,36 +375,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Player Statistics */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">📊 Your Statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-600">{stats.netWinnings} HC</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Net Winnings</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">{Math.round(stats.winRate)}%</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Win Rate</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-purple-600">{stats.biggestWin} HC</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Biggest Win</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-orange-600">{stats.topSport}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Favorite Sport</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Achievements */}
       {achievements.length > 0 && (
