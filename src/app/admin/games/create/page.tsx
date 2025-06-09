@@ -130,8 +130,31 @@
 
         console.log('Game record created successfully:', game);
 
-        // TEMPORARILY DISABLED - Skip box creation to test if this is causing the hang
-        console.log('Skipping box creation for testing...');
+        // Create 100 boxes (10x10 grid)
+        console.log('Creating boxes for the game...');
+        const boxes = [];
+        for (let row = 0; row < 10; row++) {
+          for (let col = 0; col < 10; col++) {
+            boxes.push({
+              id: `${game.id}_${row}_${col}`,
+              row,
+              col,
+              game_id: game.id,
+              user_id: null
+            });
+          }
+        }
+
+        const { error: boxError } = await supabase
+          .from('boxes')
+          .insert(boxes);
+
+        if (boxError) {
+          console.error('Box creation error:', boxError);
+          setError(`Failed to create game grid: ${boxError.message}`);
+          setLoading(false);
+          return;
+        }
 
         console.log('Game creation completed successfully');
         clearTimeout(timeoutId); // Clear timeout on success
