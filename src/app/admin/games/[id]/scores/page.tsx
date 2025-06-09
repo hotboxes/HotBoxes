@@ -259,7 +259,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
               {saving ? 'Saving...' : 'Save Scores'}
             </button>
             <button
-              onClick={() => router.push(`/games/${id}`)}
+              onClick={() => router.push(`/admin/games/${id}`)}
               className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-medium py-2 px-4 rounded-md"
             >
               Back to Game

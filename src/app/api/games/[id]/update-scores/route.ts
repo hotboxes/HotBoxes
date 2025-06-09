@@ -14,10 +14,12 @@ export async function POST(
     
     const { id } = params;
     const body = await request.json();
-    console.log('Skipping auth check for admin function');
+    console.log('Score update API called for game:', id);
+    console.log('Request body:', body);
 
     // Validate the request body
     const { homeScores, awayScores, period } = body;
+    console.log('Parsed scores:', { homeScores, awayScores });
 
     if (!Array.isArray(homeScores) || !Array.isArray(awayScores)) {
       return NextResponse.json({ error: 'Invalid scores format' }, { status: 400 });
@@ -44,6 +46,7 @@ export async function POST(
     }
 
     // Update the game with new scores
+    console.log('Attempting to update game with scores:', { home_scores: homeScores, away_scores: awayScores });
     const { error: updateError } = await supabase
       .from('games')
       .update({
@@ -53,8 +56,11 @@ export async function POST(
       .eq('id', id);
 
     if (updateError) {
+      console.error('Database update error:', updateError);
       throw updateError;
     }
+    
+    console.log('Scores updated successfully in database');
 
     // Calculate winners for each period if this is a final update
     const winners = calculateWinners(homeScores, awayScores, game.home_numbers, game.away_numbers);
