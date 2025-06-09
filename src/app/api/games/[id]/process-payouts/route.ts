@@ -47,7 +47,15 @@ export async function POST(
 
     console.log('Game validation passed');
 
-    // Check if payouts have already been processed
+    // Check if the game has a payouts_processed flag
+    if (game.payouts_processed) {
+      console.log('Game already marked as payouts processed');
+      return NextResponse.json({ 
+        error: 'Payouts have already been processed for this game' 
+      }, { status: 400 });
+    }
+
+    // Double-check by looking for existing payout transactions
     console.log('Checking for existing payouts for game:', id);
     const { data: existingPayouts, error: payoutCheckError } = await supabase
       .from('hotcoin_transactions')
@@ -188,13 +196,31 @@ export async function POST(
 
     // Insert all transaction records
     if (transactionRecords.length > 0) {
-      const { error: transactionError } = await supabase
+      console.log('Inserting transaction records:', transactionRecords.length);
+      const { data: insertedTransactions, error: transactionError } = await supabase
         .from('hotcoin_transactions')
-        .insert(transactionRecords);
+        .insert(transactionRecords)
+        .select();
 
       if (transactionError) {
         console.error('Error recording transactions:', transactionError);
+        throw transactionError;
+      } else {
+        console.log('Successfully inserted transactions:', insertedTransactions?.length || 0);
       }
+    }
+
+    // Mark game as payouts processed to prevent duplicates
+    const { error: markError } = await supabase
+      .from('games')
+      .update({ payouts_processed: true })
+      .eq('id', id);
+
+    if (markError) {
+      console.error('Error marking game as payouts processed:', markError);
+      // Don't fail the whole operation for this
+    } else {
+      console.log('Marked game as payouts processed');
     }
 
     // Get winner user details for response
