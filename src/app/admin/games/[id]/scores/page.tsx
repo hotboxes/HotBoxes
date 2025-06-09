@@ -67,6 +67,11 @@ export default function ScoresPage({ params }: ScoresPageProps) {
       console.log('Home scores from DB:', gameData.home_scores);
       console.log('Away scores from DB:', gameData.away_scores);
       
+      // Force visible debugging
+      if (gameData.home_scores || gameData.away_scores) {
+        alert(`DB Scores - Home: ${JSON.stringify(gameData.home_scores)}, Away: ${JSON.stringify(gameData.away_scores)}`);
+      }
+      
       // Set existing scores if any
       if (gameData.home_scores && gameData.home_scores.length > 0) {
         const loadedHomeScores = [...gameData.home_scores, ...Array(4 - gameData.home_scores.length).fill(0)].slice(0, 4);
@@ -147,6 +152,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
 
     try {
       console.log('Saving scores:', { homeScores, awayScores });
+      alert(`SAVING: Home: ${JSON.stringify(homeScores)}, Away: ${JSON.stringify(awayScores)}`);
       const response = await fetch(`/api/games/${id}/update-scores`, {
         method: 'POST',
         headers: {
