@@ -20,6 +20,10 @@ export async function POST(
     // Validate the request body
     const { homeScores, awayScores, period } = body;
     console.log('Parsed scores:', { homeScores, awayScores });
+    console.log('homeScores type:', typeof homeScores, 'length:', homeScores?.length);
+    console.log('awayScores type:', typeof awayScores, 'length:', awayScores?.length);
+    console.log('Raw homeScores values:', homeScores);
+    console.log('Raw awayScores values:', awayScores);
 
     if (!Array.isArray(homeScores) || !Array.isArray(awayScores)) {
       return NextResponse.json({ error: 'Invalid scores format' }, { status: 400 });
@@ -45,7 +49,7 @@ export async function POST(
       return NextResponse.json({ error: 'Numbers must be assigned before updating scores' }, { status: 400 });
     }
 
-    // Update the game with new scores using RPC to bypass RLS
+    // Use the original scores, not filtered ones
     console.log('Attempting to update game with scores:', { home_scores: homeScores, away_scores: awayScores });
     
     // Try direct update first
