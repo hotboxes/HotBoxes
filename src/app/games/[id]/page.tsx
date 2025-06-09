@@ -19,6 +19,14 @@ export default function GamePage() {
     loadGameData();
   }, [id]);
 
+  // Auto-refresh every 30 seconds to get latest scores
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadGameData();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const loadGameData = async () => {
     try {
       // Get user information
