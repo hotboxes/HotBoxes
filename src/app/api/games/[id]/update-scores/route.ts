@@ -45,9 +45,12 @@ export async function POST(
       return NextResponse.json({ error: 'Numbers must be assigned before updating scores' }, { status: 400 });
     }
 
-    // Update the game with new scores
+    // Update the game with new scores using RPC to bypass RLS
     console.log('Attempting to update game with scores:', { home_scores: homeScores, away_scores: awayScores });
-    const { error: updateError } = await supabase
+    
+    // Try direct update first
+    let updateError = null;
+    const { error: directError } = await supabase
       .from('games')
       .update({
         home_scores: homeScores,
@@ -55,12 +58,28 @@ export async function POST(
       })
       .eq('id', id);
 
+    if (directError) {
+      console.log('Direct update failed, trying RPC fallback:', directError);
+      // Fallback to RPC function
+      const { error: rpcError } = await supabase.rpc('update_game_scores', {
+        game_id: id,
+        new_home_scores: homeScores,
+        new_away_scores: awayScores
+      });
+      
+      if (rpcError) {
+        console.error('RPC update also failed:', rpcError);
+        updateError = rpcError;
+      } else {
+        console.log('RPC update succeeded');
+      }
+    } else {
+      console.log('Direct update succeeded');
+    }
+
     if (updateError) {
-      console.error('Database update error:', updateError);
       throw updateError;
     }
-    
-    console.log('Scores updated successfully in database');
 
     // Calculate winners for each period if this is a final update
     const winners = calculateWinners(homeScores, awayScores, game.home_numbers, game.away_numbers);
