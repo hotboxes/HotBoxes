@@ -206,8 +206,14 @@ export default function Grid({
     
     // Check if any period's scores match this box's numbers
     for (let i = 0; i < homeScores.length && i < awayScores.length; i++) {
-      const homeDigit = homeScores[i] % 10;
-      const awayDigit = awayScores[i] % 10;
+      const homeScore = homeScores[i];
+      const awayScore = awayScores[i];
+      
+      // Skip if both scores are 0 (no data)
+      if (homeScore === 0 && awayScore === 0) continue;
+      
+      const homeDigit = homeScore % 10;
+      const awayDigit = awayScore % 10;
       
       if (homeDigit === homeNumber && awayDigit === awayNumber) {
         return true;
