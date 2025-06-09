@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     console.log('Starting payout processing for game:', params.id);
-    const supabase = createClient();
+    const supabase = await createClient();
     const { id } = params;
 
     // Get the current user and verify admin access
