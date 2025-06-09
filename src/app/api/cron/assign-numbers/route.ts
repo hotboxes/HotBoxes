@@ -1,15 +1,27 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  console.log('Cron job started - checking for games needing number assignment');
+  console.log('=== CRON JOB DEBUG START ===');
   
   try {
+    console.log('Step 0: Importing supabase...');
+    const { createClient } = await import('@supabase/supabase-js');
+    console.log('Step 0.1: Supabase import successful');
+    
+    console.log('Step 1: Creating supabase client...');
+    console.log('Environment check:', {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    });
+    
     // Use service role client for cron jobs (no auth required)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    
+    console.log('Step 2: Supabase client created successfully');
 
     // Get all active games that don't have numbers assigned yet
     console.log('Querying for games...');
