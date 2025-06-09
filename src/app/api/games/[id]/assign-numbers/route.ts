@@ -5,9 +5,13 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  console.log('Number assignment API called for game:', params.id);
+  
   try {
     const supabase = createClient();
     const { id } = params;
+    
+    console.log('Checking user authentication...');
 
     // Get the current user
     const {

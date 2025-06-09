@@ -62,10 +62,14 @@ export default function AssignNumbersPage({ params }: AssignNumbersPageProps) {
   const handleAssignNumbers = async () => {
     if (!game || game.numbersAssigned) return;
 
+    console.log('Starting manual number assignment for game:', id);
     setLoading(true);
     setError(null);
 
     try {
+      console.log('Calling assignment API...');
+      const startTime = Date.now();
+      
       const response = await fetch(`/api/games/${id}/assign-numbers`, {
         method: 'POST',
         headers: {
@@ -73,15 +77,24 @@ export default function AssignNumbersPage({ params }: AssignNumbersPageProps) {
         },
       });
 
+      const endTime = Date.now();
+      console.log(`API call completed in ${endTime - startTime}ms`, { 
+        status: response.status, 
+        ok: response.ok 
+      });
+
       const data = await response.json();
+      console.log('API response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to assign numbers');
       }
 
+      console.log('Numbers assigned successfully');
       alert('Numbers assigned successfully!');
       router.push(`/admin/games/${id}`);
     } catch (err: any) {
+      console.error('Assignment error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

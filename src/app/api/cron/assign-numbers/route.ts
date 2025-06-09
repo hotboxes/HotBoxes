@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     const { data: games, error: gamesError } = await supabase
       .from('games')
       .select('*')
-      .eq('isActive', true)
-      .eq('numbersAssigned', false);
+      .eq('is_active', true)
+      .eq('numbers_assigned', false);
 
     if (gamesError) {
       throw gamesError;
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     const results = [];
 
     for (const game of games) {
-      const gameTime = new Date(game.gameDate).getTime();
+      const gameTime = new Date(game.game_date).getTime();
       const timeDifference = gameTime - currentTime;
 
       // If it's 10 minutes or less before the game, assign numbers
@@ -43,9 +43,9 @@ export async function GET(request: Request) {
           const { error: updateError } = await supabase
             .from('games')
             .update({
-              homeNumbers,
-              awayNumbers,
-              numbersAssigned: true,
+              home_numbers: homeNumbers,
+              away_numbers: awayNumbers,
+              numbers_assigned: true,
             })
             .eq('id', game.id);
 
