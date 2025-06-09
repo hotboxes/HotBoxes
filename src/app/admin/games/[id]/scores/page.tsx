@@ -183,7 +183,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Update Scores</h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {game.name} - {game.homeTeam} vs {game.awayTeam}
+          {game.name} - {game.home_team} vs {game.away_team}
         </p>
       </div>
 
@@ -222,7 +222,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    {game.homeTeam}
+                    {game.home_team}
                   </label>
                   <input
                     type="number"
@@ -234,7 +234,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    {game.awayTeam}
+                    {game.away_team}
                   </label>
                   <input
                     type="number"
@@ -280,7 +280,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
                           {winner.period}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Score: {game.homeTeam} {winner.homeScore} - {game.awayTeam} {winner.awayScore}
+                          Score: {game.home_team} {winner.homeScore} - {game.away_team} {winner.awayScore}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           Winning digits: {winner.homeDigit} - {winner.awayDigit}
@@ -309,16 +309,16 @@ export default function ScoresPage({ params }: ScoresPageProps) {
       </div>
 
       {/* Current Numbers Display */}
-      {game.numbersAssigned && (
+      {game.numbers_assigned && (
         <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Grid Numbers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {game.homeTeam} (Rows)
+                {game.home_team} (Rows)
               </h3>
               <div className="flex flex-wrap gap-2">
-                {game.homeNumbers?.map((num, index) => (
+                {game.home_numbers?.map((num, index) => (
                   <div key={index} className="w-8 h-8 bg-blue-100 dark:bg-blue-900 flex items-center justify-center rounded text-sm font-medium">
                     {num}
                   </div>
@@ -327,10 +327,10 @@ export default function ScoresPage({ params }: ScoresPageProps) {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {game.awayTeam} (Columns)
+                {game.away_team} (Columns)
               </h3>
               <div className="flex flex-wrap gap-2">
-                {game.awayNumbers?.map((num, index) => (
+                {game.away_numbers?.map((num, index) => (
                   <div key={index} className="w-8 h-8 bg-orange-100 dark:bg-orange-900 flex items-center justify-center rounded text-sm font-medium">
                     {num}
                   </div>
