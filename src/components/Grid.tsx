@@ -204,9 +204,29 @@ export default function Grid({
     const homeNumber = homeNumbers[row];
     const awayNumber = awayNumbers[col];
     
+    // Debug: Log what we're checking for position (0,0) only
+    if (row === 0 && col === 0) {
+      console.log('GRID DEBUG:');
+      console.log('Home scores:', homeScores);
+      console.log('Away scores:', awayScores);
+      console.log('Home numbers array:', homeNumbers);
+      console.log('Away numbers array:', awayNumbers);
+      console.log(`Checking position (${row},${col}): homeNumber=${homeNumber}, awayNumber=${awayNumber}`);
+    }
+    
     // Check if any period's scores match this box's numbers
     for (let i = 0; i < homeScores.length && i < awayScores.length; i++) {
-      if (homeScores[i] % 10 === homeNumber && awayScores[i] % 10 === awayNumber) {
+      const homeDigit = homeScores[i] % 10;
+      const awayDigit = awayScores[i] % 10;
+      
+      if (row === 0 && col === 0) {
+        console.log(`Period ${i}: Score ${homeScores[i]}-${awayScores[i]}, Digits ${homeDigit}-${awayDigit}`);
+      }
+      
+      if (homeDigit === homeNumber && awayDigit === awayNumber) {
+        if (row === 0 && col === 0) {
+          console.log(`WINNER FOUND at (${row},${col}) for period ${i}`);
+        }
         return true;
       }
     }
