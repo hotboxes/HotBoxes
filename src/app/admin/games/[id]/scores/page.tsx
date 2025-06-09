@@ -197,7 +197,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
         </div>
       )}
 
-      {!game.numbersAssigned && (
+      {!game.numbers_assigned && (
         <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4">
           <div className="flex">
             <div className="ml-3">
@@ -251,7 +251,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
           <div className="mt-6 flex space-x-4">
             <button
               onClick={handleSaveScores}
-              disabled={saving || !game.numbersAssigned}
+              disabled={saving || !game.numbers_assigned}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
             >
               {saving ? 'Saving...' : 'Save Scores'}
@@ -269,7 +269,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Winners Preview</h2>
           
-          {game.numbersAssigned ? (
+          {game.numbers_assigned ? (
             <div className="space-y-4">
               {currentWinners.length > 0 ? (
                 currentWinners.map((winner, index) => (
