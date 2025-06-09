@@ -183,16 +183,7 @@ export default function GamePage() {
                 </p>
               </dd>
             </div>
-            {game.home_scores && game.home_scores.length > 0 && (
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Current Score
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-                  {game.home_team}: {game.home_scores[game.home_scores.length - 1]} - {game.away_team}: {game.away_scores[game.away_scores.length - 1]}
-                </dd>
-              </div>
-            )}
+            {/* Current Score display temporarily removed for simplicity */}
           </dl>
         </div>
       </div>

@@ -67,8 +67,8 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
           *,
           profiles (username, email)
         `)
-        .eq('gameId', id)
-        .not('userId', 'is', null);
+        .eq('game_id', id)
+        .not('user_id', 'is', null);
 
       if (boxError) {
         console.error('Error loading boxes:', boxError);
@@ -116,7 +116,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
     if (!game || !boxes) return null;
 
     const totalBoxesSold = boxes.length;
-    const totalRevenue = totalBoxesSold * game.entryFee;
+    const totalRevenue = totalBoxesSold * (game.entry_fee || 0);
     const prizePool = Math.floor(totalRevenue * 0.9);
     const houseCut = totalRevenue - prizePool;
     const prizePerPeriod = Math.floor(prizePool / 4);
@@ -131,26 +131,26 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
   };
 
   const calculateWinners = () => {
-    if (!game?.homeScores || !game?.awayScores || !game?.homeNumbers || !game?.awayNumbers) {
+    if (!game?.home_scores || !game?.away_scores || !game?.home_numbers || !game?.away_numbers) {
       return [];
     }
 
     const winners = [];
     const periodLabels = ['1st Quarter', 'Halftime', '3rd Quarter', 'Final'];
 
-    for (let period = 0; period < game.homeScores.length; period++) {
-      const homeScore = game.homeScores[period];
-      const awayScore = game.awayScores[period];
+    for (let period = 0; period < game.home_scores.length; period++) {
+      const homeScore = game.home_scores[period];
+      const awayScore = game.away_scores[period];
       
       const homeDigit = homeScore % 10;
       const awayDigit = awayScore % 10;
       
-      const homeRow = game.homeNumbers.indexOf(homeDigit);
-      const awayCol = game.awayNumbers.indexOf(awayDigit);
+      const homeRow = game.home_numbers.indexOf(homeDigit);
+      const awayCol = game.away_numbers.indexOf(awayDigit);
       
       if (homeRow !== -1 && awayCol !== -1) {
         const winningBox = boxes?.find(box => 
-          box.row === homeRow && box.column === awayCol
+          box.row === homeRow && box.col === awayCol
         );
         
         winners.push({
@@ -195,7 +195,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Process Payouts</h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {game.name} - {game.homeTeam} vs {game.awayTeam}
+          {game.name} - {game.home_team} vs {game.away_team}
         </p>
       </div>
 
@@ -255,12 +255,12 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
           <div className="mt-6">
             <button
               onClick={handleProcessPayouts}
-              disabled={processing || !game.numbersAssigned || !game.homeScores || game.homeScores.length === 0}
+              disabled={processing || !game.numbers_assigned || !game.home_scores || game.home_scores.length === 0}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
             >
               {processing ? 'Processing Payouts...' : 'Process Payouts'}
             </button>
-            {(!game.numbersAssigned || !game.homeScores || game.homeScores.length === 0) && (
+            {(!game.numbers_assigned || !game.home_scores || game.home_scores.length === 0) && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                 Numbers must be assigned and scores entered first
               </p>
@@ -282,7 +282,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
                         {winner.period}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Score: {game.homeTeam} {winner.homeScore} - {game.awayTeam} {winner.awayScore}
+                        Score: {game.home_team} {winner.homeScore} - {game.away_team} {winner.awayScore}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Winning digits: {winner.homeDigit} - {winner.awayDigit}
@@ -307,7 +307,7 @@ export default function PayoutsPage({ params }: PayoutsPageProps) {
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              {!game.homeScores || game.homeScores.length === 0 
+              {!game.home_scores || game.home_scores.length === 0 
                 ? "Enter scores to see winners" 
                 : "No winners yet"}
             </p>
