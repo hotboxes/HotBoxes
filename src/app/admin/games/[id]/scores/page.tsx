@@ -63,12 +63,27 @@ export default function ScoresPage({ params }: ScoresPageProps) {
 
       setGame(gameData);
       
+      console.log('Loaded game data:', gameData);
+      console.log('Home scores from DB:', gameData.home_scores);
+      console.log('Away scores from DB:', gameData.away_scores);
+      
       // Set existing scores if any
       if (gameData.home_scores && gameData.home_scores.length > 0) {
-        setHomeScores([...gameData.home_scores, ...Array(4 - gameData.home_scores.length).fill(0)].slice(0, 4));
+        const loadedHomeScores = [...gameData.home_scores, ...Array(4 - gameData.home_scores.length).fill(0)].slice(0, 4);
+        console.log('Setting home scores:', loadedHomeScores);
+        setHomeScores(loadedHomeScores);
+      } else {
+        console.log('No home scores found, using defaults');
+        setHomeScores([0, 0, 0, 0]);
       }
+      
       if (gameData.away_scores && gameData.away_scores.length > 0) {
-        setAwayScores([...gameData.away_scores, ...Array(4 - gameData.away_scores.length).fill(0)].slice(0, 4));
+        const loadedAwayScores = [...gameData.away_scores, ...Array(4 - gameData.away_scores.length).fill(0)].slice(0, 4);
+        console.log('Setting away scores:', loadedAwayScores);
+        setAwayScores(loadedAwayScores);
+      } else {
+        console.log('No away scores found, using defaults');
+        setAwayScores([0, 0, 0, 0]);
       }
     } catch (err) {
       setError('Failed to load game');
@@ -131,6 +146,7 @@ export default function ScoresPage({ params }: ScoresPageProps) {
     }, 10000);
 
     try {
+      console.log('Saving scores:', { homeScores, awayScores });
       const response = await fetch(`/api/games/${id}/update-scores`, {
         method: 'POST',
         headers: {
