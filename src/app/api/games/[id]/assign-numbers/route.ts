@@ -45,7 +45,7 @@ export async function POST(
     }
 
     // Check if numbers are already assigned
-    if (game.numbersAssigned) {
+    if (game.numbers_assigned) {
       return NextResponse.json({ error: 'Numbers already assigned' }, { status: 400 });
     }
 
@@ -57,9 +57,9 @@ export async function POST(
     const { error: updateError } = await supabase
       .from('games')
       .update({
-        homeNumbers,
-        awayNumbers,
-        numbersAssigned: true,
+        home_numbers: homeNumbers,
+        away_numbers: awayNumbers,
+        numbers_assigned: true,
       })
       .eq('id', id);
 
@@ -69,8 +69,8 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      homeNumbers,
-      awayNumbers,
+      home_numbers: homeNumbers,
+      away_numbers: awayNumbers,
       message: 'Numbers assigned successfully'
     });
 
@@ -114,12 +114,12 @@ export async function GET(
     }
 
     // Check if numbers are already assigned
-    if (game.numbersAssigned) {
+    if (game.numbers_assigned) {
       return NextResponse.json({ error: 'Numbers already assigned' }, { status: 400 });
     }
 
     // Check if it's time to assign numbers (10 minutes before game)
-    const gameTime = new Date(game.gameDate).getTime();
+    const gameTime = new Date(game.game_date).getTime();
     const currentTime = new Date().getTime();
     const tenMinutesInMs = 10 * 60 * 1000;
     const timeDifference = gameTime - currentTime;
@@ -139,9 +139,9 @@ export async function GET(
     const { error: updateError } = await supabase
       .from('games')
       .update({
-        homeNumbers,
-        awayNumbers,
-        numbersAssigned: true,
+        home_numbers: homeNumbers,
+        away_numbers: awayNumbers,
+        numbers_assigned: true,
       })
       .eq('id', id);
 
@@ -151,8 +151,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      homeNumbers,
-      awayNumbers,
+      home_numbers: homeNumbers,
+      away_numbers: awayNumbers,
       message: 'Numbers auto-assigned successfully'
     });
 
