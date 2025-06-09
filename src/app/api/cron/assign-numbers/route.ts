@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL\!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY\!
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     
     const { data: games } = await supabase
@@ -14,7 +14,7 @@ export async function GET() {
       .eq('is_active', true)
       .eq('numbers_assigned', false);
 
-    if (\!games?.length) {
+    if (!games?.length) {
       return NextResponse.json({ message: 'No games' });
     }
 
@@ -41,4 +41,3 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-EOF < /dev/null
