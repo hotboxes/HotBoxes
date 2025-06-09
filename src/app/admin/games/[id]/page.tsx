@@ -205,6 +205,42 @@ export default function AdminGamePage() {
     setEditingPayouts(false);
   };
 
+  const handleCloseGame = async () => {
+    if (!confirm('Are you sure you want to close this game? This will make it inactive and prevent further box purchases.')) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', authUser?.id)
+        .single();
+      
+      if (profileError || !profile?.is_admin) {
+        throw new Error('Admin access required');
+      }
+
+      const { error } = await supabase
+        .from('games')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Reload game data
+      await loadGameData();
+      alert('Game closed successfully!');
+    } catch (error: any) {
+      console.error('Error closing game:', error);
+      alert('Failed to close game: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleGameSave = async () => {
     setSaving(true);
     try {
@@ -811,10 +847,14 @@ export default function AdminGamePage() {
                 Process Payouts
               </div>
             </Link>
-            <button className="bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 p-4 rounded-lg text-center transition-colors">
+            <button 
+              onClick={handleCloseGame}
+              disabled={saving || !game?.is_active}
+              className="bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 p-4 rounded-lg text-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div className="text-2xl mb-2">🔒</div>
               <div className="text-sm font-medium text-red-700 dark:text-red-300">
-                Close Game
+                {game?.is_active ? 'Close Game' : 'Game Closed'}
               </div>
             </button>
           </div>

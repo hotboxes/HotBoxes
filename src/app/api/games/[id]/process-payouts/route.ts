@@ -47,6 +47,26 @@ export async function POST(
 
     console.log('Game validation passed');
 
+    // Check if payouts have already been processed
+    const { data: existingPayouts, error: payoutCheckError } = await supabase
+      .from('hotcoin_transactions')
+      .select('id')
+      .eq('game_id', id)
+      .eq('type', 'payout')
+      .limit(1);
+
+    if (payoutCheckError) {
+      console.log('Error checking existing payouts:', payoutCheckError);
+      return NextResponse.json({ error: 'Database error checking payouts' }, { status: 500 });
+    }
+
+    if (existingPayouts && existingPayouts.length > 0) {
+      console.log('Payouts already processed for this game');
+      return NextResponse.json({ error: 'Payouts have already been processed for this game' }, { status: 400 });
+    }
+
+    console.log('No existing payouts found, proceeding...');
+
     // Get all boxes for this game
     const { data: boxes, error: boxesError } = await supabase
       .from('boxes')

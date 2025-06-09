@@ -108,11 +108,17 @@ export default function DashboardPage() {
   // Calculate user statistics
   const getUserStats = () => {
     const gamesPlayed = userGames.length;
-    const totalSpent = transactions.filter(tx => tx.type === 'bet').reduce((sum, tx) => sum + tx.amount, 0);
+    
+    // Calculate net winnings: money won/refunded minus money spent on bets
+    // Note: bet amounts are stored as negative values, so we use Math.abs()
+    const totalSpent = transactions.filter(tx => tx.type === 'bet').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     const totalWon = transactions.filter(tx => tx.type === 'payout').reduce((sum, tx) => sum + tx.amount, 0);
+    const totalRefunded = transactions.filter(tx => tx.type === 'refund').reduce((sum, tx) => sum + tx.amount, 0);
+    const netWinnings = totalWon + totalRefunded - totalSpent;
+    
+    // Deposits and withdrawals are filtered by verification_status since they require admin approval
     const totalDeposited = transactions.filter(tx => tx.type === 'purchase' && tx.verification_status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
     const totalWithdrawn = transactions.filter(tx => tx.type === 'withdrawal' && tx.verification_status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
-    const netWinnings = totalWon - totalSpent;
     const winRate = gamesPlayed > 0 ? ((transactions.filter(tx => tx.type === 'payout').length / gamesPlayed) * 100) : 0;
     
     const biggestWin = Math.max(...transactions.filter(tx => tx.type === 'payout').map(tx => tx.amount), 0);
