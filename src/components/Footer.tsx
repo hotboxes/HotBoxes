@@ -15,9 +15,6 @@ export default function Footer() {
               <Link href="/games" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
                 Games
               </Link>
-              <Link href="/hotcoins" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
-                Buy HotCoins
-              </Link>
               <Link href="/faq" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
                 FAQ
               </Link>
@@ -32,7 +29,6 @@ export default function Footer() {
               </Link>
             </div>
           </div>
-
         </div>
 
         {/* Bottom section - Legal notice */}
