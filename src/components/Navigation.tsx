@@ -24,12 +24,10 @@ export default function Navigation({ user: propUser }: NavigationProps) {
   useEffect(() => {
     loadUser();
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
           setUser(session.user);
-          // Load profile data
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
@@ -77,7 +75,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
     }
   };
   
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
@@ -114,16 +111,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    href="/hotcoins"
-                    className={`${
-                      pathname === '/hotcoins'
-                        ? 'border-indigo-500 text-gray-900 dark:text-white'
-                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    HotCoins
                   </Link>
                   <Link
                     href="/settings"
@@ -186,7 +173,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
             )}
           </div>
 
-          {/* Mobile menu button */}
           <div className="flex md:hidden items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -194,39 +180,13 @@ export default function Navigation({ user: propUser }: NavigationProps) {
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon when menu is closed */}
               {!isOpen ? (
-                <svg
-                  className="block h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               ) : (
-                // Icon when menu is open
-                <svg
-                  className="block h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
             </button>
@@ -234,7 +194,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
         </div>
       </div>
 
-      {/* Mobile menu, show/hide based on menu state */}
       {isOpen && (
         <div className="md:hidden">
           <div className="pt-2 pb-3 space-y-1">
@@ -261,16 +220,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   Dashboard
                 </Link>
                 <Link
-                  href="/hotcoins"
-                  className={`${
-                    pathname === '/hotcoins'
-                      ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                      : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                >
-                  HotCoins
-                </Link>
-                <Link
                   href="/settings"
                   className={`${
                     pathname === '/settings'
@@ -293,46 +242,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   </Link>
                 )}
               </>
-            )}
-          </div>
-          <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
-            {user ? (
-              <div className="flex items-center px-4">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
-                    {profile?.username ? profile.username[0].toUpperCase() : user.email[0].toUpperCase()}
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800 dark:text-white">
-                    {profile?.username || user.email}
-                  </div>
-                  <div className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
-                    {profile?.hotcoin_balance || 0} HotCoins
-                  </div>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="ml-auto flex-shrink-0 bg-gray-200 dark:bg-gray-700 p-1 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"
-                >
-                  <span className="px-3 py-1 text-sm text-gray-800 dark:text-white">Sign Out</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-1 px-4">
-                <Link
-                  href="/login"
-                  className="block text-center px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="block text-center px-3 py-2 rounded-md text-base font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  Sign Up
-                </Link>
-              </div>
             )}
           </div>
         </div>
