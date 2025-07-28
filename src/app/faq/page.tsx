@@ -203,41 +203,6 @@ export default function FAQ() {
             </div>
           </section>
 
-          {/* Tax and Legal Section */}
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tax & Legal Information</h2>
-            <div className="space-y-4">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Do I need to report my winnings for taxes?
-                </h3>
-                <div className="text-gray-600 dark:text-gray-400 space-y-2">
-                  <p><strong>Yes, you are responsible for reporting gambling winnings to tax authorities.</strong></p>
-                  <p>HotBoxes provides a complete transaction history that you can use for tax reporting purposes.</p>
-                  <p>Consult with a tax professional about your specific obligations.</p>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Are there geographic restrictions?
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  You are responsible for ensuring that your participation complies with all applicable laws in your jurisdiction. Some regions may prohibit online gaming with real money.
-                </p>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Can I have multiple accounts?
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  No, each person is limited to one account. Multiple accounts to circumvent limits or gain unfair advantages will result in account suspension and forfeiture of funds.
-                </p>
-              </div>
-            </div>
-          </section>
-
           {/* Support Section */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Support</h2>
