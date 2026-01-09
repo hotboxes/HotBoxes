@@ -4,15 +4,11 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <Link 
-          href="/"
-          className="text-indigo-600 hover:text-indigo-500 text-sm font-medium mb-4 inline-block"
-        >
-          ← Back to Home
-        </Link>
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
-        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+      <div className="text-center mb-12">
+        <h1 className="text-5xl font-extrabold text-white text-display mb-4">
+          PRIVACY <span className="text-[#FF4500]">POLICY</span>
+        </h1>
+        <p className="text-xl text-gray-300 font-semibold">
           Last updated: {new Date().toLocaleDateString()}
         </p>
       </div>

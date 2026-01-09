@@ -2,13 +2,13 @@
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Terms of Service
+          <h1 className="text-5xl font-extrabold text-white text-display mb-4">
+            TERMS OF <span className="text-[#FF4500]">SERVICE</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
+          <p className="text-xl text-gray-300 font-semibold">
             Last updated: {new Date().toLocaleDateString()}
           </p>
         </div>

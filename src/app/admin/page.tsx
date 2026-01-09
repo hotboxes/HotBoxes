@@ -513,8 +513,10 @@ export default function AdminPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ultimate Admin Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400">Real-time platform control center</p>
+          <h1 className="text-5xl font-extrabold text-white text-display">
+            ADMIN <span className="text-[#FF4500]">DASHBOARD</span>
+          </h1>
+          <p className="text-xl text-gray-300 font-semibold">Real-time platform control center</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
