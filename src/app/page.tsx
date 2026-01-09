@@ -15,18 +15,26 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Main Content */}
       <main className="flex-grow">
-        {/* Hero Section - PLACEHOLDER FOR VIDEO BACKGROUND */}
+        {/* Hero Section - STADIUM BACKGROUND */}
         <div className="relative overflow-hidden">
-          {/* Placeholder Animated Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0A1128] via-[#1E3A8A] to-[#0A1128] grid-pattern">
+          {/* Stadium Background Image */}
+          <div className="absolute inset-0">
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: 'url(/hero-bg.png)',
+              }}
+            />
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0A1128]/70 via-[#0A1128]/60 to-[#0A1128]/90"></div>
             {/* Animated Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF4500]/20 via-transparent to-[#39FF14]/20 animate-shimmer opacity-50"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF4500]/20 via-transparent to-[#39FF14]/20 animate-shimmer opacity-30"></div>
 
             {/* Floating Elements */}
             {mounted && (
               <>
                 <motion.div
-                  className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[#FF4500]/20 blur-3xl"
+                  className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[#FF4500]/30 blur-3xl"
                   animate={{
                     y: [0, -30, 0],
                     scale: [1, 1.2, 1],
@@ -38,25 +46,13 @@ export default function Home() {
                   }}
                 />
                 <motion.div
-                  className="absolute bottom-20 right-10 w-40 h-40 rounded-full bg-[#39FF14]/20 blur-3xl"
+                  className="absolute bottom-20 right-10 w-40 h-40 rounded-full bg-[#39FF14]/30 blur-3xl"
                   animate={{
                     y: [0, 30, 0],
                     scale: [1, 1.3, 1],
                   }}
                   transition={{
                     duration: 5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-                <motion.div
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#FFD700]/10 blur-3xl"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 0.6, 0.3],
-                  }}
-                  transition={{
-                    duration: 6,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
