@@ -36,33 +36,6 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">3. HotCoins and Virtual Currency</h2>
-            <div className="space-y-3 text-gray-600 dark:text-gray-400">
-              <p><strong>Virtual Currency:</strong> HotCoins (HC) are virtual credits used within our platform. 1 HotCoin equals $1 USD in value.</p>
-              <p><strong>Purchase Terms:</strong> HotCoins can be purchased using real money through approved payment methods (currently CashApp only). Minimum purchase is $10.</p>
-              <p><strong>Real Money Backing:</strong> HotCoins represent real USD value and can be withdrawn as actual cash to your CashApp account.</p>
-              <p><strong>No Refunds:</strong> HotCoin purchases are generally non-refundable except in cases of proven technical errors or fraud.</p>
-              <p><strong>Withdrawal Rights:</strong> You may withdraw your HotCoin balance as real money, subject to our withdrawal policies and limits.</p>
-              <p><strong>Account Closure:</strong> Upon account closure, any remaining HotCoin balance may be withdrawn according to our withdrawal procedures.</p>
-              <p><strong>Tax Obligations:</strong> You are solely responsible for reporting HotCoin winnings and transactions to relevant tax authorities.</p>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">4. Payment and Withdrawal Terms</h2>
-            <div className="space-y-3 text-gray-600 dark:text-gray-400">
-              <p><strong>Payment Methods:</strong> We currently accept payments via CashApp to our designated account ($playhotboxes). Minimum purchase is $10.</p>
-              <p><strong>Payment Verification:</strong> All payments require transaction ID verification. Duplicate transaction IDs will be rejected to prevent fraud.</p>
-              <p><strong>Auto-Approval:</strong> Payments of $100 and under are automatically approved and HotCoins credited instantly. Larger amounts require manual verification within 24 hours.</p>
-              <p><strong>Real Money Transactions:</strong> All HotCoin purchases involve actual USD transactions through CashApp. Payments are non-reversible once processed.</p>
-              <p><strong>Withdrawal Limits:</strong> Minimum withdrawal is $25. Maximum daily withdrawal is $500 per user for fraud prevention.</p>
-              <p><strong>Withdrawal Processing:</strong> Withdrawals are processed within 24-48 hours. Your HotCoins are immediately deducted to prevent double-spending. We reserve the right to request additional verification for large withdrawals.</p>
-              <p><strong>Anti-Money Laundering:</strong> We monitor all transactions for suspicious activity and maintain records for regulatory compliance. Large or unusual transactions may trigger additional verification requirements.</p>
-              <p><strong>Transaction Fees:</strong> We do not charge fees for deposits or withdrawals, but third-party payment processors may charge their own fees.</p>
-            </div>
-          </section>
-
-          <section>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">5. Gameplay and Game Rules</h2>
             <div className="space-y-3 text-gray-600 dark:text-gray-400">
               <p><strong>Game Mechanics:</strong> Games are based on the final scores of NFL and NBA games. Winners are determined by matching the last digit of team scores at the end of each quarter.</p>
