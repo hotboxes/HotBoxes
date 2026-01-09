@@ -20,6 +20,15 @@ export default function Navigation({ user: propUser }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     loadUser();
@@ -52,7 +61,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       setUser(authUser);
-      
+
       if (authUser) {
         const { data: profileData } = await supabase
           .from('profiles')
@@ -76,30 +85,43 @@ export default function Navigation({ user: propUser }: NavigationProps) {
       console.error('Error signing out:', error);
     }
   };
-  
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'bg-[#0A1128]/95 backdrop-blur-lg shadow-xl shadow-[#FF4500]/10'
+        : 'bg-[#0A1128]/80 backdrop-blur-sm'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
+          {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                HotBoxes
-              </h1>
+            <Link href="/" className="flex-shrink-0 flex items-center group">
+              {/* PLACEHOLDER: Replace with actual logo image */}
+              <div className="flex items-center space-x-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#FF4500] to-[#FF6B35] rounded-lg flex items-center justify-center glow-orange">
+                  <span className="text-white font-bold text-xl">H</span>
+                </div>
+                <h1 className="text-3xl font-extrabold text-white text-display group-hover:text-[#FF4500] transition-colors">
+                  HOT<span className="text-[#FF4500]">BOXES</span>
+                </h1>
+              </div>
             </Link>
-            <nav className="hidden md:ml-6 md:flex md:space-x-8">
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:ml-10 lg:flex lg:space-x-1">
               <Link
                 href="/games"
                 className={`${
                   pathname === '/games'
-                    ? 'border-indigo-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                    ? 'text-[#FF4500] border-b-2 border-[#FF4500]'
+                    : 'text-gray-300 hover:text-[#FF4500] border-b-2 border-transparent hover:border-[#FF6B35]'
+                } px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-all`}
               >
                 Games
               </Link>
@@ -109,9 +131,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     href="/dashboard"
                     className={`${
                       pathname === '/dashboard'
-                        ? 'border-indigo-500 text-gray-900 dark:text-white'
-                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                        ? 'text-[#FF4500] border-b-2 border-[#FF4500]'
+                        : 'text-gray-300 hover:text-[#FF4500] border-b-2 border-transparent hover:border-[#FF6B35]'
+                    } px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-all`}
                   >
                     Dashboard
                   </Link>
@@ -119,9 +141,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     href="/hotcoins"
                     className={`${
                       pathname === '/hotcoins'
-                        ? 'border-indigo-500 text-gray-900 dark:text-white'
-                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                        ? 'text-[#FF4500] border-b-2 border-[#FF4500]'
+                        : 'text-gray-300 hover:text-[#FF4500] border-b-2 border-transparent hover:border-[#FF6B35]'
+                    } px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-all`}
                   >
                     HotCoins
                   </Link>
@@ -129,9 +151,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     href="/settings"
                     className={`${
                       pathname === '/settings'
-                        ? 'border-indigo-500 text-gray-900 dark:text-white'
-                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                        ? 'text-[#FF4500] border-b-2 border-[#FF4500]'
+                        : 'text-gray-300 hover:text-[#FF4500] border-b-2 border-transparent hover:border-[#FF6B35]'
+                    } px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-all`}
                   >
                     Settings
                   </Link>
@@ -140,9 +162,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                       href="/admin"
                       className={`${
                         pathname.startsWith('/admin')
-                          ? 'border-red-500 text-gray-900 dark:text-white'
-                          : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                      } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                          ? 'text-[#39FF14] border-b-2 border-[#39FF14] glow-green'
+                          : 'text-gray-300 hover:text-[#39FF14] border-b-2 border-transparent hover:border-[#39FF14]'
+                      } px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-all`}
                     >
                       Admin
                     </Link>
@@ -151,19 +173,31 @@ export default function Navigation({ user: propUser }: NavigationProps) {
               )}
             </nav>
           </div>
-          <div className="hidden md:flex md:items-center md:space-x-4">
+
+          {/* Right side - User info / Auth buttons */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-4">
             {user ? (
               <>
-                <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md text-sm font-medium">
-                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-                    {profile?.hotcoin_balance || 0} HC
+                {/* HotCoin Balance Badge */}
+                <div className="flex items-center space-x-3 bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-[#FFD700]/30 glow-gold">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-full flex items-center justify-center">
+                      <span className="text-[#0A1128] text-xs font-bold">HC</span>
+                    </div>
+                    <span className="text-[#FFD700] font-bold text-lg">
+                      {profile?.hotcoin_balance || 0}
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-gray-600"></div>
+                  <span className="text-white font-medium text-sm">
+                    {profile?.username || user.email?.split('@')[0]}
                   </span>
-                  <span>|</span>
-                  <span>{profile?.username || user.email}</span>
                 </div>
+
+                {/* Sign Out Button */}
                 <button
                   onClick={handleSignOut}
-                  className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-md text-sm font-medium"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-all border border-white/20 hover:border-white/40"
                 >
                   Sign Out
                 </button>
@@ -172,13 +206,13 @@ export default function Navigation({ user: propUser }: NavigationProps) {
               <>
                 <Link
                   href="/login"
-                  className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
+                  className="px-4 py-2 text-white hover:text-[#FF4500] rounded-lg text-sm font-semibold transition-all"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  className="px-6 py-2 bg-gradient-to-r from-[#FF4500] to-[#FF6B35] text-white rounded-lg text-sm font-bold transition-all transform hover:scale-105 glow-orange"
                 >
                   Sign Up
                 </Link>
@@ -187,14 +221,13 @@ export default function Navigation({ user: propUser }: NavigationProps) {
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex md:hidden items-center">
+          <div className="flex lg:hidden items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FF4500]"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon when menu is closed */}
               {!isOpen ? (
                 <svg
                   className="block h-6 w-6"
@@ -212,7 +245,6 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   />
                 </svg>
               ) : (
-                // Icon when menu is open
                 <svg
                   className="block h-6 w-6"
                   xmlns="http://www.w3.org/2000/svg"
@@ -234,17 +266,17 @@ export default function Navigation({ user: propUser }: NavigationProps) {
         </div>
       </div>
 
-      {/* Mobile menu, show/hide based on menu state */}
+      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden">
-          <div className="pt-2 pb-3 space-y-1">
+        <div className="lg:hidden border-t border-white/10 bg-[#0A1128]/98 backdrop-blur-lg">
+          <div className="pt-2 pb-3 space-y-1 px-4">
             <Link
               href="/games"
               className={`${
                 pathname === '/games'
-                  ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                  : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                  ? 'bg-[#FF4500]/20 border-l-4 border-[#FF4500] text-[#FF4500]'
+                  : 'border-l-4 border-transparent text-gray-300 hover:bg-white/5 hover:border-[#FF6B35] hover:text-white'
+              } block pl-4 pr-4 py-3 text-base font-semibold uppercase tracking-wide`}
             >
               Games
             </Link>
@@ -254,9 +286,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   href="/dashboard"
                   className={`${
                     pathname === '/dashboard'
-                      ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                      : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                      ? 'bg-[#FF4500]/20 border-l-4 border-[#FF4500] text-[#FF4500]'
+                      : 'border-l-4 border-transparent text-gray-300 hover:bg-white/5 hover:border-[#FF6B35] hover:text-white'
+                  } block pl-4 pr-4 py-3 text-base font-semibold uppercase tracking-wide`}
                 >
                   Dashboard
                 </Link>
@@ -264,9 +296,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   href="/hotcoins"
                   className={`${
                     pathname === '/hotcoins'
-                      ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                      : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                      ? 'bg-[#FF4500]/20 border-l-4 border-[#FF4500] text-[#FF4500]'
+                      : 'border-l-4 border-transparent text-gray-300 hover:bg-white/5 hover:border-[#FF6B35] hover:text-white'
+                  } block pl-4 pr-4 py-3 text-base font-semibold uppercase tracking-wide`}
                 >
                   HotCoins
                 </Link>
@@ -274,9 +306,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                   href="/settings"
                   className={`${
                     pathname === '/settings'
-                      ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                      : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                      ? 'bg-[#FF4500]/20 border-l-4 border-[#FF4500] text-[#FF4500]'
+                      : 'border-l-4 border-transparent text-gray-300 hover:bg-white/5 hover:border-[#FF6B35] hover:text-white'
+                  } block pl-4 pr-4 py-3 text-base font-semibold uppercase tracking-wide`}
                 >
                   Settings
                 </Link>
@@ -285,9 +317,9 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                     href="/admin"
                     className={`${
                       pathname.startsWith('/admin')
-                        ? 'bg-red-50 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300'
-                        : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-white'
-                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                        ? 'bg-[#39FF14]/20 border-l-4 border-[#39FF14] text-[#39FF14]'
+                        : 'border-l-4 border-transparent text-gray-300 hover:bg-white/5 hover:border-[#39FF14] hover:text-white'
+                    } block pl-4 pr-4 py-3 text-base font-semibold uppercase tracking-wide`}
                   >
                     Admin
                   </Link>
@@ -295,40 +327,48 @@ export default function Navigation({ user: propUser }: NavigationProps) {
               </>
             )}
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
+
+          {/* Mobile User Section */}
+          <div className="pt-4 pb-3 border-t border-white/10">
             {user ? (
-              <div className="flex items-center px-4">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
-                    {profile?.username ? profile.username[0].toUpperCase() : user.email[0].toUpperCase()}
+              <div className="px-4 space-y-3">
+                {/* HotCoin Balance */}
+                <div className="flex items-center justify-between bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 backdrop-blur-sm px-4 py-3 rounded-lg border border-[#FFD700]/30">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-full flex items-center justify-center">
+                      <span className="text-[#0A1128] text-sm font-bold">HC</span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 uppercase">Balance</div>
+                      <div className="text-[#FFD700] font-bold text-xl">
+                        {profile?.hotcoin_balance || 0}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-white font-medium text-sm">
+                    {profile?.username || user.email?.split('@')[0]}
                   </div>
                 </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800 dark:text-white">
-                    {profile?.username || user.email}
-                  </div>
-                  <div className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
-                    {profile?.hotcoin_balance || 0} HotCoins
-                  </div>
-                </div>
+
+                {/* Sign Out Button */}
                 <button
                   onClick={handleSignOut}
-                  className="ml-auto flex-shrink-0 bg-gray-200 dark:bg-gray-700 p-1 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-all border border-white/20"
                 >
-                  <span className="px-3 py-1 text-sm text-gray-800 dark:text-white">Sign Out</span>
+                  Sign Out
                 </button>
               </div>
             ) : (
-              <div className="space-y-1 px-4">
+              <div className="space-y-2 px-4">
                 <Link
                   href="/login"
-                  className="block text-center px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className="block text-center px-4 py-3 rounded-lg text-base font-semibold text-white hover:bg-white/5 border border-white/20"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="block text-center px-3 py-2 rounded-md text-base font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="block text-center px-4 py-3 rounded-lg text-base font-bold bg-gradient-to-r from-[#FF4500] to-[#FF6B35] text-white glow-orange"
                 >
                   Sign Up
                 </Link>

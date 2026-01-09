@@ -1,8 +1,32 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Teko:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors - Stadium Energy Meets Vegas Excitement */
+  --color-primary-orange: #FF4500;
+  --color-primary-orange-light: #FF6B35;
+  --color-primary-orange-dark: #CC3700;
+
+  --color-navy: #0A1128;
+  --color-navy-light: #1E3A8A;
+  --color-midnight: #050818;
+
+  --color-neon-green: #39FF14;
+  --color-neon-green-glow: #00FF41;
+
+  --color-gold: #FFD700;
+  --color-gold-dark: #FFA500;
+
+  /* Backgrounds */
+  --background: #0A1128;
+  --background-dark: #050818;
+  --foreground: #ffffff;
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #0A1128 0%, #1E3A8A 50%, #0A1128 100%);
+  --gradient-hot: linear-gradient(135deg, #FF4500 0%, #FF6B35 100%);
+  --gradient-win: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  --gradient-card: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(10, 17, 40, 0.8) 100%);
 }
 
 @theme inline {
@@ -14,13 +38,121 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0A1128;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background: var(--background-dark);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-orange);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-orange-light);
+}
+
+/* Glow Effects */
+.glow-orange {
+  box-shadow: 0 0 20px rgba(255, 69, 0, 0.5), 0 0 40px rgba(255, 69, 0, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), 0 0 40px rgba(57, 255, 20, 0.3);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+}
+
+/* Text Glow */
+.text-glow-orange {
+  text-shadow: 0 0 10px rgba(255, 69, 0, 0.8), 0 0 20px rgba(255, 69, 0, 0.6);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.8), 0 0 20px rgba(57, 255, 20, 0.6);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 69, 0, 0.8), 0 0 60px rgba(255, 69, 0, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 1000px 100%;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Grid Pattern Background */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 69, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 69, 0, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Utility Classes */
+.text-display {
+  font-family: 'Bebas Neue', 'Teko', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.text-sports {
+  font-family: 'Teko', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }

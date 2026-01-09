@@ -1,131 +1,264 @@
-import Image from "next/image";
+'use client';
+
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main Content */}
       <main className="flex-grow">
-        {/* Hero Section */}
-        <div className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white">
-            Super Bowl Squares{" "}
-            <span className="text-indigo-600 dark:text-indigo-400">
-              Reimagined
-            </span>
-          </h2>
-          <p className="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Join the fun with a modern take on the classic game. Claim your boxes and watch the excitement unfold in real-time!
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/games"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-lg font-medium transition-all transform hover:scale-105"
-            >
-              Get Started
-            </Link>
+        {/* Hero Section - PLACEHOLDER FOR VIDEO BACKGROUND */}
+        <div className="relative overflow-hidden">
+          {/* Placeholder Animated Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0A1128] via-[#1E3A8A] to-[#0A1128] grid-pattern">
+            {/* Animated Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF4500]/20 via-transparent to-[#39FF14]/20 animate-shimmer opacity-50"></div>
+
+            {/* Floating Elements */}
+            {mounted && (
+              <>
+                <motion.div
+                  className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[#FF4500]/20 blur-3xl"
+                  animate={{
+                    y: [0, -30, 0],
+                    scale: [1, 1.2, 1],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                <motion.div
+                  className="absolute bottom-20 right-10 w-40 h-40 rounded-full bg-[#39FF14]/20 blur-3xl"
+                  animate={{
+                    y: [0, 30, 0],
+                    scale: [1, 1.3, 1],
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                <motion.div
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#FFD700]/10 blur-3xl"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.3, 0.6, 0.3],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </>
+            )}
           </div>
+
+          {/* Hero Content */}
+          <div className="relative z-10 py-20 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white text-display mb-6">
+                CLAIM YOUR
+                <span className="block text-[#FF4500] text-glow-orange mt-2">
+                  SQUARE
+                </span>
+              </h1>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#39FF14] text-glow-green mb-4">
+                WIN BIG. GET HOT.
+              </p>
+              <p className="mt-6 text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Real money. Real games. Real-time action on NFL & NBA matchups.
+                <span className="text-[#FFD700] font-semibold"> Join the heat.</span>
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link
+                  href="/games"
+                  className="group relative px-8 py-4 bg-gradient-to-r from-[#FF4500] to-[#FF6B35] text-white text-xl font-bold rounded-lg overflow-hidden transition-all transform hover:scale-105 glow-orange"
+                >
+                  <span className="relative z-10">BROWSE GAMES</span>
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                </Link>
+
+                <Link
+                  href="/signup"
+                  className="px-8 py-4 bg-transparent border-2 border-[#39FF14] text-[#39FF14] text-xl font-bold rounded-lg transition-all transform hover:scale-105 hover:bg-[#39FF14]/10 glow-green"
+                >
+                  CREATE ACCOUNT
+                </Link>
+              </div>
+
+              {/* Live Stats Ticker (Placeholder) */}
+              <motion.div
+                className="mt-16 flex flex-wrap justify-center gap-8 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+              >
+                <div className="px-6 py-3 bg-white/5 backdrop-blur-sm rounded-lg border border-[#FF4500]/30">
+                  <div className="text-3xl font-bold text-[#FFD700] text-glow-gold">$12,450</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Paid This Week</div>
+                </div>
+                <div className="px-6 py-3 bg-white/5 backdrop-blur-sm rounded-lg border border-[#39FF14]/30">
+                  <div className="text-3xl font-bold text-[#39FF14] text-glow-green">1,247</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Active Players</div>
+                </div>
+                <div className="px-6 py-3 bg-white/5 backdrop-blur-sm rounded-lg border border-[#FF6B35]/30">
+                  <div className="text-3xl font-bold text-[#FF4500] text-glow-orange">18</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Live Games</div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Bottom Fade */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050818] to-transparent"></div>
         </div>
 
-        {/* Feature Section */}
-        <div className="bg-gray-50 dark:bg-gray-900 py-12">
+        {/* How It Works Section */}
+        <div className="relative bg-[#050818] py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-                How It Works
-              </h3>
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-5xl font-bold text-white text-display mb-4">
+                HOW IT <span className="text-[#FF4500]">WORKS</span>
+              </h2>
+              <div className="h-1 w-32 bg-gradient-to-r from-[#FF4500] to-[#FF6B35] mx-auto rounded-full"></div>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Step 1 */}
+              <motion.div
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                <div className="relative bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/80 backdrop-blur-sm rounded-xl p-8 border border-[#FF4500]/20 overflow-hidden transition-all duration-300 group-hover:border-[#FF4500]/60 group-hover:shadow-2xl group-hover:shadow-[#FF4500]/20">
+                  <div className="absolute top-0 right-0 text-[120px] font-bold text-[#FF4500]/10 leading-none">1</div>
+
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#FF4500] to-[#FF6B35] rounded-xl flex items-center justify-center mb-6 glow-orange">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-white mb-3 text-sports">
+                      CREATE ACCOUNT
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      Sign up in 30 seconds. Verify your age. Load HotCoins via CashApp. Start playing.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Step 2 */}
+              <motion.div
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <div className="relative bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/80 backdrop-blur-sm rounded-xl p-8 border border-[#39FF14]/20 overflow-hidden transition-all duration-300 group-hover:border-[#39FF14]/60 group-hover:shadow-2xl group-hover:shadow-[#39FF14]/20">
+                  <div className="absolute top-0 right-0 text-[120px] font-bold text-[#39FF14]/10 leading-none">2</div>
+
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#39FF14] to-[#00FF41] rounded-xl flex items-center justify-center mb-6 glow-green">
+                      <svg className="w-8 h-8 text-[#0A1128]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-white mb-3 text-sports">
+                      CLAIM SQUARES
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      Pick your lucky squares on the 10x10 grid. Watch numbers get assigned. Wait for kickoff.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Step 3 */}
+              <motion.div
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <div className="relative bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/80 backdrop-blur-sm rounded-xl p-8 border border-[#FFD700]/20 overflow-hidden transition-all duration-300 group-hover:border-[#FFD700]/60 group-hover:shadow-2xl group-hover:shadow-[#FFD700]/20">
+                  <div className="absolute top-0 right-0 text-[120px] font-bold text-[#FFD700]/10 leading-none">3</div>
+
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl flex items-center justify-center mb-6 glow-gold">
+                      <svg className="w-8 h-8 text-[#0A1128]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-white mb-3 text-sports">
+                      WIN CASH
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      Match the score digits each quarter. Win HotCoins. Cash out to your CashApp instantly.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            <div className="mt-10">
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Feature 1 */}
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                        />
-                      </svg>
-                    </div>
-                    <h4 className="mt-4 text-lg font-medium text-gray-900 dark:text-white text-center">
-                      Create Your Account
-                    </h4>
-                    <p className="mt-2 text-base text-gray-600 dark:text-gray-300 text-center">
-                      Sign up in seconds to join the community and start playing.
-                    </p>
-                  </div>
-                </div>
 
-                {/* Feature 2 */}
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                        />
-                      </svg>
-                    </div>
-                    <h4 className="mt-4 text-lg font-medium text-gray-900 dark:text-white text-center">
-                      Choose Your Boxes
-                    </h4>
-                    <p className="mt-2 text-base text-gray-600 dark:text-gray-300 text-center">
-                      Select your lucky squares on our interactive game board.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Feature 3 */}
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0"
-                        />
-                      </svg>
-                    </div>
-                    <h4 className="mt-4 text-lg font-medium text-gray-900 dark:text-white text-center">
-                      Watch & Win
-                    </h4>
-                    <p className="mt-2 text-base text-gray-600 dark:text-gray-300 text-center">
-                      Follow the game and see if your squares match the scores.
-                    </p>
-                  </div>
-                </div>
+            {/* CTA Banner */}
+            <motion.div
+              className="mt-20 text-center"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="inline-block bg-gradient-to-r from-[#FF4500]/20 to-[#FF6B35]/20 backdrop-blur-sm border border-[#FF4500]/30 rounded-2xl px-12 py-8">
+                <p className="text-3xl font-bold text-white mb-4 text-display">
+                  READY TO PLAY?
+                </p>
+                <p className="text-gray-400 mb-6 text-lg">
+                  18+ only. Play responsibly. Check your local laws.
+                </p>
+                <Link
+                  href="/signup"
+                  className="inline-block px-10 py-4 bg-gradient-to-r from-[#FF4500] to-[#FF6B35] text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105 glow-orange"
+                >
+                  JOIN NOW
+                </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </main>
-
     </div>
   );
 }
