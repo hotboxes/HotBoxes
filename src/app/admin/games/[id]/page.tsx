@@ -562,6 +562,8 @@ export default function AdminGamePage() {
                       <option value={10}>10 HC</option>
                       <option value={20}>20 HC</option>
                       <option value={50}>50 HC</option>
+                      <option value={100}>100 HC</option>
+                      <option value={200}>200 HC</option>
                     </select>
                   </div>
                 </div>
