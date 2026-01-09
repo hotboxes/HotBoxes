@@ -48,14 +48,17 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#050818] to-[#0A1128] flex items-center justify-center">
+        <div className="relative">
+          <div className="w-32 h-32 border-4 border-[#FF4500] border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 w-32 h-32 border-4 border-[#39FF14] border-b-transparent rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#050818] to-[#0A1128] flex flex-col">
       <Navigation user={user} />
       <main className="flex-grow">
         {children}

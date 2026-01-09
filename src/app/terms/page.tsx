@@ -13,7 +13,7 @@ export default function TermsOfService() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm space-y-8">
+        <div className="bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/80 backdrop-blur-sm rounded-2xl p-8 border border-[#FFD700]/20 space-y-8">
           <section>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">

@@ -232,9 +232,9 @@ export default function FAQ() {
 // Helper component
 function FAQCard({ question, answer }: { question: string; answer: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{question}</h3>
-      <div className="text-gray-600 dark:text-gray-400 space-y-2">{answer}</div>
+    <div className="bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/80 backdrop-blur-sm rounded-xl p-6 border border-[#39FF14]/20 hover:border-[#39FF14]/50 transition-all">
+      <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wider">{question}</h3>
+      <div className="text-gray-300 space-y-2">{answer}</div>
     </div>
   );
 }

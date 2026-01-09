@@ -127,26 +127,26 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">5. Your Privacy Rights</h2>
           
           <div className="space-y-4">
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">📧 Access and Correction</h3>
-              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                You can access and update your personal information through your account settings. 
+            <div className="bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/70 backdrop-blur-sm rounded-xl p-4 border border-[#39FF14]/20">
+              <h3 className="text-lg font-bold text-[#39FF14] mb-2 uppercase tracking-wider">📧 Access and Correction</h3>
+              <p className="text-gray-300 text-sm">
+                You can access and update your personal information through your account settings.
                 Contact us if you need assistance with data corrections or have questions about your information.
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">🗑️ Account Deletion</h3>
-              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                You may request account deletion at any time. Please note that we may retain certain information 
+            <div className="bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/70 backdrop-blur-sm rounded-xl p-4 border border-[#FF4500]/20">
+              <h3 className="text-lg font-bold text-[#FF4500] mb-2 uppercase tracking-wider">🗑️ Account Deletion</h3>
+              <p className="text-gray-300 text-sm">
+                You may request account deletion at any time. Please note that we may retain certain information
                 as required by law or for legitimate business purposes (e.g., transaction records for tax compliance).
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">📊 Data Portability</h3>
-              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                You can request a copy of your personal data in a structured, commonly used format. 
+            <div className="bg-gradient-to-br from-[#1E3A8A]/30 to-[#0A1128]/70 backdrop-blur-sm rounded-xl p-4 border border-[#FFD700]/20">
+              <h3 className="text-lg font-bold text-[#FFD700] mb-2 uppercase tracking-wider">📊 Data Portability</h3>
+              <p className="text-gray-300 text-sm">
+                You can request a copy of your personal data in a structured, commonly used format.
                 Contact our support team to initiate a data export request.
               </p>
             </div>
