@@ -318,6 +318,8 @@
                   <option value={10}>10 HotCoins</option>
                   <option value={20}>20 HotCoins</option>
                   <option value={50}>50 HotCoins</option>
+                  <option value={100}>100 HotCoins</option>
+                  <option value={200}>200 HotCoins</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {entryFee === 0 ? (
